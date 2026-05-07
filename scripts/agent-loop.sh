@@ -68,7 +68,7 @@ run_worker() {
     printf '[%s] executor: %s\n' "$TID" "$selected"
 
     if [[ "$selected" == "codex" ]]; then
-        codex exec --sandbox workspace-write --cd "$ROOT" "$prompt"
+        codex exec --ephemeral --sandbox workspace-write --cd "$ROOT" "$prompt"
         return $?
     fi
 
