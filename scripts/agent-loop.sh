@@ -94,15 +94,7 @@ while true; do
     run_count=$((run_count + 1))
     printf '\n[%s] Run #%s: %s\n\n' "$TID" "$run_count" "$task_title"
 
-    run_worker "You are a Minerva AI team worker running as ${TID}.
-Before editing, confirm git root is /Users/zouyongming/projects/minerva-ai-kernel.
-Do not read or modify /Users/zouyongming/VoxSign or unrelated repositories.
-Read ${TASK_FILE} and execute only that task.
-Set Status to in_progress at start.
-Respect Allowed Files and Non-Goals.
-Run the listed Test / Eval command before completion.
-Set Status to done only when acceptance criteria are met.
-Write concrete results in the Output section."
+    run_worker "You are a Minerva AI team worker running as ${TID}. Before editing, confirm git root is /Users/zouyongming/projects/minerva-ai-kernel. Do not read or modify /Users/zouyongming/VoxSign or unrelated repositories. Read ${TASK_FILE} and execute only that task. Set Status to in_progress at start. Respect Allowed Files and Non-Goals. Run the listed Test / Eval command before completion. Set Status to done only when acceptance criteria are met. Write concrete results in the Output section."
 
     printf '\n[%s] Worker exited. Rechecking task status...\n' "$TID"
     sleep 2
