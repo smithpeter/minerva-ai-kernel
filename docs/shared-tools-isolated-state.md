@@ -37,6 +37,10 @@ Never share:
 - release state
 - git worktrees
 - configuration namespaces
+- project-specific environment variables
+- project-specific launch agents
+- project-specific runbooks
+- project-specific memory/state stores
 
 ## Repository Boundaries
 
@@ -74,6 +78,28 @@ voxsign
 .voxsign/
 ~/.voxsign/
 ```
+
+## Reverse Contamination Rule
+
+VoxSign must not contaminate Minerva.
+
+Forbidden inside Minerva:
+
+- imports from `voxsign`
+- references to `/Users/zouyongming/VoxSign` except in boundary docs/tests
+- `VOXSIGN_*` environment variable usage
+- `.voxsign/` or `~/.voxsign/` state usage
+- VoxSign `.team/` or `.tasks/`
+- VoxSign service ports as defaults
+- VoxSign launch agent names
+- VoxSign deploy scripts
+- VoxSign-specific prompts or memory files
+
+Allowed references:
+
+- boundary documentation
+- tests that verify VoxSign paths are forbidden
+- future explicit `voxsign-integration` adapter work
 
 ## Mission Control Rule
 
@@ -120,6 +146,8 @@ Stop immediately if:
 - task needs secrets
 - task wants destructive commands
 - task tries to publish or deploy without explicit approval
+- task imports VoxSign code into Minerva core
+- task copies VoxSign-specific config into Minerva
 
 ## Enforcement
 
@@ -129,3 +157,8 @@ Run before agent work:
 bash scripts/check-project-boundary.sh
 ```
 
+Run contamination scan:
+
+```bash
+bash scripts/check-contamination.sh
+```

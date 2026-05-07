@@ -76,6 +76,7 @@ Minerva has a local task board in `.tasks/` and a scoped agent loop:
 ```bash
 bash scripts/minerva-ai-team-status.sh
 bash scripts/check-project-boundary.sh
+bash scripts/check-contamination.sh
 bash scripts/agent-loop.sh T1
 ```
 

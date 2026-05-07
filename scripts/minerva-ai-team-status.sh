@@ -23,6 +23,7 @@ printf 'project: Minerva\n'
 printf 'forbidden roots:\n'
 printf -- '- /Users/zouyongming/VoxSign\n'
 printf -- '- /Users/zouyongming/VoxSign-decide-review\n'
+bash scripts/check-contamination.sh
 
 section "Local Task Board"
 if [[ -f .tasks/board.md ]]; then
