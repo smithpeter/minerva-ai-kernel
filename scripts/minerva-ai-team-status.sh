@@ -10,10 +10,7 @@ section() {
 
 section "Repository"
 printf 'root: %s\n' "$ROOT"
-if [[ "$ROOT" != "/Users/zouyongming/projects/minerva-ai-kernel" ]]; then
-    printf 'ERROR: expected Minerva root, got %s\n' "$ROOT"
-    exit 2
-fi
+bash scripts/check-project-boundary.sh
 printf 'branch: '
 git branch --show-current || true
 printf 'head: '
@@ -45,4 +42,3 @@ section "Recommended Next Action"
 printf '1. Assign T1 or T2 to an AI worker.\n'
 printf '2. Worker must edit only allowed files in its task card.\n'
 printf '3. Worker must run compile/tests and update Output before claiming done.\n'
-

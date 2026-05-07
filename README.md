@@ -63,6 +63,7 @@ Start here:
 - [AI team execution system](docs/ai-team-execution-system.md)
 - [Most important next step](docs/most-important-next-step.md)
 - [GitHub issues](docs/github-issues.md)
+- [Shared tools, isolated state](docs/shared-tools-isolated-state.md)
 
 ## Repository Status
 
@@ -74,6 +75,7 @@ Minerva has a local task board in `.tasks/` and a scoped agent loop:
 
 ```bash
 bash scripts/minerva-ai-team-status.sh
+bash scripts/check-project-boundary.sh
 bash scripts/agent-loop.sh T1
 ```
 
