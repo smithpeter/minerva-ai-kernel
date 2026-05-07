@@ -62,8 +62,8 @@ Start here:
 - [Execution plan and founder role](docs/execution-plan-and-founder-role.md)
 - [AI team execution system](docs/ai-team-execution-system.md)
 - [Most important next step](docs/most-important-next-step.md)
+- [GitHub issues](docs/github-issues.md)
 
 ## Repository Status
 
 This repository is being initialized from the Minerva research workspace. The first implementation target is `minerva observe -- <command>`.
-
