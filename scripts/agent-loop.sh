@@ -31,12 +31,49 @@ if [[ ! -f "$TASK_FILE" ]]; then
     exit 2
 fi
 
-if ! command -v claude >/dev/null 2>&1; then
-    printf 'ERROR: claude CLI not found. Install/auth Claude Code or assign task manually.\n'
-    exit 127
-fi
-
 export TERMINAL_ID="$TID"
+
+EXECUTOR="${MINERVA_AI_EXECUTOR:-auto}"
+
+choose_executor() {
+    if [[ "$EXECUTOR" == "codex" ]]; then
+        command -v codex >/dev/null 2>&1 || return 1
+        printf 'codex'
+        return 0
+    fi
+    if [[ "$EXECUTOR" == "claude" ]]; then
+        command -v claude >/dev/null 2>&1 || return 1
+        printf 'claude'
+        return 0
+    fi
+    if command -v codex >/dev/null 2>&1; then
+        printf 'codex'
+        return 0
+    fi
+    if command -v claude >/dev/null 2>&1; then
+        printf 'claude'
+        return 0
+    fi
+    return 1
+}
+
+run_worker() {
+    local prompt="$1"
+    local selected
+    if ! selected="$(choose_executor)"; then
+        printf 'ERROR: no supported AI executor found. Install/auth Codex or Claude Code.\n'
+        return 127
+    fi
+
+    printf '[%s] executor: %s\n' "$TID" "$selected"
+
+    if [[ "$selected" == "codex" ]]; then
+        codex exec --sandbox workspace-write --cd "$ROOT" "$prompt"
+        return $?
+    fi
+
+    claude --allowedTools "Read,Write,Edit,Glob,Grep,Bash" -p "$prompt"
+}
 
 run_count=0
 while true; do
@@ -57,7 +94,7 @@ while true; do
     run_count=$((run_count + 1))
     printf '\n[%s] Run #%s: %s\n\n' "$TID" "$run_count" "$task_title"
 
-    claude --allowedTools "Read,Write,Edit,Glob,Grep,Bash" -p "You are a Minerva AI team worker running as ${TID}.
+    run_worker "You are a Minerva AI team worker running as ${TID}.
 Before editing, confirm git root is /Users/zouyongming/projects/minerva-ai-kernel.
 Do not read or modify /Users/zouyongming/VoxSign or unrelated repositories.
 Read ${TASK_FILE} and execute only that task.
@@ -72,4 +109,3 @@ Write concrete results in the Output section."
 done
 
 printf '[%s] Agent loop finished. Runs: %s\n' "$TID" "$run_count"
-

@@ -99,3 +99,12 @@ To stop it:
 ```bash
 bash scripts/uninstall-ai-team-launchd.sh
 ```
+
+The local loop supports Codex and Claude Code:
+
+```bash
+MINERVA_AI_EXECUTOR=codex bash scripts/ai-team-tick.sh
+MINERVA_AI_EXECUTOR=claude bash scripts/ai-team-tick.sh
+```
+
+Default mode is `auto`, which prefers Codex when available.

@@ -22,8 +22,8 @@ if ! mkdir "$LOCK_DIR" 2>/dev/null; then
 fi
 trap 'rmdir "$LOCK_DIR"' EXIT
 
-if ! command -v claude >/dev/null 2>&1; then
-    printf 'Minerva AI team tick skipped: claude CLI not found.\n'
+if ! command -v codex >/dev/null 2>&1 && ! command -v claude >/dev/null 2>&1; then
+    printf 'Minerva AI team tick skipped: no supported AI executor found.\n'
     exit 0
 fi
 
@@ -52,4 +52,3 @@ set -e
 
 printf '\nMinerva AI team tick finished with status %s\n' "$status" | tee -a "$LOG_FILE"
 exit "$status"
-
