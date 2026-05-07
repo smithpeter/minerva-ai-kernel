@@ -67,3 +67,14 @@ Start here:
 ## Repository Status
 
 This repository is being initialized from the Minerva research workspace. The first implementation target is `minerva observe -- <command>`.
+
+## Local AI Team
+
+Minerva has a local task board in `.tasks/` and a scoped agent loop:
+
+```bash
+bash scripts/minerva-ai-team-status.sh
+bash scripts/agent-loop.sh T1
+```
+
+These scripts are scoped to `/Users/zouyongming/projects/minerva-ai-kernel` and must not be used from VoxSign.
