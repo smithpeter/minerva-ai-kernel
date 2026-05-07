@@ -10,8 +10,8 @@ dist/
 build/
 *.egg-info/
 .minerva/runs/
+.minerva/ai-team/
 models/*.gguf
 models/*.safetensors
 models/*.bin
 *.log
-

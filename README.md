@@ -81,3 +81,21 @@ bash scripts/agent-loop.sh T1
 ```
 
 These scripts are scoped to `/Users/zouyongming/projects/minerva-ai-kernel` and must not be used from VoxSign.
+
+For bounded automation, run one task tick:
+
+```bash
+bash scripts/ai-team-tick.sh
+```
+
+To install a macOS launchd job that runs one tick every 30 minutes:
+
+```bash
+bash scripts/install-ai-team-launchd.sh
+```
+
+To stop it:
+
+```bash
+bash scripts/uninstall-ai-team-launchd.sh
+```
