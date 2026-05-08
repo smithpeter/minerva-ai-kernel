@@ -19,12 +19,12 @@ if [[ "$ROOT" != "$EXPECTED_ROOT" ]]; then
     exit 2
 fi
 
-TID="${1:?Usage: bash scripts/agent-loop.sh T1|T2|T3|T4}"
+TID="${1:?Usage: bash scripts/agent-loop.sh T<number>}"
 TASK_FILE=".tasks/${TID}.task.md"
 BOARD=".tasks/board.md"
 
-if [[ ! "$TID" =~ ^T[1-9]$ ]]; then
-    printf 'ERROR: terminal id must be T1-T9\n'
+if [[ ! "$TID" =~ ^T[1-9][0-9]*$ ]]; then
+    printf 'ERROR: terminal id must be T<number>\n'
     exit 2
 fi
 
