@@ -39,4 +39,4 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T31 | #31 | done | Release | Record full local release dry-run evidence for current commit |
 | T32 | #32 | done | Release / Integration | Automate GitHub Actions and domain readiness checks |
 | T33 | #33 | done | Docs / Integration | Add practical integration recipes for CI, SDK, and agents |
-| T34 | #34 | pending | Eval / Research | Define local CPU model candidate registry and eval scoring contract |
+| T34 | #34 | done | Eval / Research | Define local CPU model candidate registry and eval scoring contract |

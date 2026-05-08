@@ -13,6 +13,14 @@ Find the smallest local model that can reliably perform scheduler tasks:
 
 ## Candidate Tiers
 
+The machine-readable CPU-local candidate registry is
+[`models/cpu_model_candidates.json`](../models/cpu_model_candidates.json).
+Use that file as the source for candidate metadata, provider commands,
+quantization expectations, hardware targets, and license/provenance review
+notes. Score candidates with the
+[`CPU Model Eval Scoring Contract`](cpu-model-eval-scoring-contract.md) before
+promotion.
+
 ### L0: Tiny Local Code Controller
 
 Recommended first model:

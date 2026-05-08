@@ -1,0 +1,122 @@
+{
+  "schema_version": "minerva.cpu_model_candidate_registry.v0",
+  "updated_at": "2026-05-08",
+  "purpose": "Research registry for CPU-local Minerva controller model candidates under 500M parameters.",
+  "selection_constraints": {
+    "maximum_parameters_millions": 500,
+    "minimum_runtime": "CPU-only local inference",
+    "remote_models_required": false,
+    "model_weights_shipped_by_minerva": false,
+    "models_downloaded_by_registry": false,
+    "benchmark_claims": "none"
+  },
+  "scoring_contract": "docs/cpu-model-eval-scoring-contract.md",
+  "candidates": [
+    {
+      "id": "qwen2_5_coder_0_5b_instruct_ollama",
+      "name": "Qwen2.5-Coder-0.5B-Instruct",
+      "provider_model": "qwen2.5-coder:0.5b-instruct",
+      "parameter_count_millions": 490,
+      "parameter_count_notes": "0.49B total and 0.36B non-embedding as recorded in docs/sub-500m-cpu-model-plan.md.",
+      "runtime_path": {
+        "runtime": "Ollama OpenAI-compatible local endpoint",
+        "base_url": "http://localhost:11434/v1/chat/completions",
+        "minerva_adapter": "LocalOpenAICompatibleProvider",
+        "artifact_format": "Ollama-managed local quantized model"
+      },
+      "quantization_expectation": "Ollama default for first local smoke runs; prefer explicit GGUF Q4_K_M or Q5_K_M for repeatable standalone evals.",
+      "hardware_target": {
+        "device": "CPU",
+        "gpu_required": false,
+        "target_environment": "developer laptop or CI-like CPU runner with enough RAM for a 0.5B quantized model"
+      },
+      "license_provenance_notes": "Qwen2.5-Coder family; existing Minerva plan records Apache 2.0. Verify the exact upstream model card and license before redistribution or packaging.",
+      "provider_command": "ollama run qwen2.5-coder:0.5b-instruct",
+      "setup_commands": [
+        "ollama serve",
+        "ollama pull qwen2.5-coder:0.5b-instruct"
+      ],
+      "minerva_role": "L0 code controller for stderr, stack traces, command failures, and decision.v0 JSON.",
+      "candidate_status": "first_eval_candidate",
+      "eval_notes": "No benchmark result claimed until this candidate is scored under docs/cpu-model-eval-scoring-contract.md."
+    },
+    {
+      "id": "qwen2_5_0_5b_instruct_ollama",
+      "name": "Qwen2.5-0.5B-Instruct",
+      "provider_model": "qwen2.5:0.5b-instruct",
+      "parameter_count_millions": 490,
+      "parameter_count_notes": "0.49B total and 0.36B non-embedding as recorded in docs/sub-500m-cpu-model-plan.md.",
+      "runtime_path": {
+        "runtime": "Ollama OpenAI-compatible local endpoint",
+        "base_url": "http://localhost:11434/v1/chat/completions",
+        "minerva_adapter": "LocalOpenAICompatibleProvider",
+        "artifact_format": "Ollama-managed local quantized model"
+      },
+      "quantization_expectation": "Ollama default for first comparison runs; prefer explicit GGUF Q4_K_M or Q5_K_M for repeatable standalone evals.",
+      "hardware_target": {
+        "device": "CPU",
+        "gpu_required": false,
+        "target_environment": "developer laptop or CI-like CPU runner with enough RAM for a 0.5B quantized model"
+      },
+      "license_provenance_notes": "Qwen2.5 instruct family; verify the exact upstream model card and license before redistribution or packaging.",
+      "provider_command": "ollama run qwen2.5:0.5b-instruct",
+      "setup_commands": [
+        "ollama serve",
+        "ollama pull qwen2.5:0.5b-instruct"
+      ],
+      "minerva_role": "L0 general controller for mixed-language observations and generic failure routing.",
+      "candidate_status": "comparison_candidate",
+      "eval_notes": "No benchmark result claimed until this candidate is scored under docs/cpu-model-eval-scoring-contract.md."
+    },
+    {
+      "id": "smollm2_360m_instruct_gguf",
+      "name": "SmolLM2-360M-Instruct",
+      "provider_model": "SmolLM2-360M-Instruct-Q4_K_M.gguf",
+      "parameter_count_millions": 362,
+      "parameter_count_notes": "Approximately 362M parameters as recorded in docs/sub-500m-cpu-model-plan.md.",
+      "runtime_path": {
+        "runtime": "llama.cpp GGUF local process",
+        "base_url": "n/a",
+        "minerva_adapter": "future local GGUF adapter",
+        "artifact_format": "GGUF file kept outside git, expected under models/local/ when manually supplied"
+      },
+      "quantization_expectation": "GGUF Q4_K_M for first CPU routing experiments; compare Q5_K_M if latency budget allows.",
+      "hardware_target": {
+        "device": "CPU",
+        "gpu_required": false,
+        "target_environment": "low-memory laptop, small VM, or edge CPU where a 0.5B model is too large"
+      },
+      "license_provenance_notes": "SmolLM2 instruct family; existing Minerva plan records Apache 2.0. Verify the exact upstream model card and license before redistribution or packaging.",
+      "provider_command": "llama-cli -m models/local/SmolLM2-360M-Instruct-Q4_K_M.gguf --temp 0 --ctx-size 4096 -p '<decision.v0 prompt>'",
+      "setup_commands": [],
+      "minerva_role": "L0 micro controller for failure classification, safe read-only action choice, and escalation decisions.",
+      "candidate_status": "micro_candidate",
+      "eval_notes": "No benchmark result claimed until this candidate is scored under docs/cpu-model-eval-scoring-contract.md."
+    },
+    {
+      "id": "smollm2_135m_instruct_gguf",
+      "name": "SmolLM2-135M-Instruct",
+      "provider_model": "SmolLM2-135M-Instruct-Q4_K_M.gguf",
+      "parameter_count_millions": 135,
+      "parameter_count_notes": "Approximately 135M parameters as recorded in docs/sub-500m-cpu-model-plan.md.",
+      "runtime_path": {
+        "runtime": "llama.cpp GGUF local process",
+        "base_url": "n/a",
+        "minerva_adapter": "future local GGUF adapter",
+        "artifact_format": "GGUF file kept outside git, expected under models/local/ when manually supplied"
+      },
+      "quantization_expectation": "GGUF Q4_K_M with a reduced label/action schema and constrained decoding.",
+      "hardware_target": {
+        "device": "CPU",
+        "gpu_required": false,
+        "target_environment": "extreme CPU-only/on-device fallback where only classifier-router behavior is expected"
+      },
+      "license_provenance_notes": "SmolLM2 instruct family; verify the exact upstream model card and license before redistribution or packaging.",
+      "provider_command": "llama-cli -m models/local/SmolLM2-135M-Instruct-Q4_K_M.gguf --temp 0 --ctx-size 2048 -p '<compact decision prompt>'",
+      "setup_commands": [],
+      "minerva_role": "L0 nano controller for obvious failure labels and escalation-only fallback when confidence is low.",
+      "candidate_status": "nano_candidate",
+      "eval_notes": "No benchmark result claimed until this candidate is scored under docs/cpu-model-eval-scoring-contract.md."
+    }
+  ]
+}

@@ -89,6 +89,8 @@ Start here:
 - [M0 demo script](examples/m0-demo-script.md)
 - [Model strategy and local provider path](docs/model-strategy.md)
 - [Sub-500M CPU model plan and eval report shape](docs/sub-500m-cpu-model-plan.md)
+- [CPU-local model candidate registry](models/cpu_model_candidates.json)
+- [CPU model eval scoring contract](docs/cpu-model-eval-scoring-contract.md)
 - [Product strategy](docs/product-strategy.md)
 - [Questions and requirements](docs/questions-and-requirements.md)
 - [Execution plan and founder role](docs/execution-plan-and-founder-role.md)

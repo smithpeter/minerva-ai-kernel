@@ -48,15 +48,17 @@ python3 -m minerva_kernel.cpu_model_eval
 ```
 
 The JSON report uses the CPU model eval report shape from
-`docs/sub-500m-cpu-model-plan.md`, including:
+`docs/sub-500m-cpu-model-plan.md` and the scoring definitions in
+`docs/cpu-model-eval-scoring-contract.md`, including:
 
 - `minerva.cpu_model_eval_report.v0` schema version.
 - candidate and minimum-path metadata.
 - corpus case mix.
-- JSON validity, dangerous action rate, escalation quality, safe recovery
-  decision rate, and latency fields.
+- JSON validity, failure label accuracy, safe recovery decision rate,
+  escalation quality, dangerous action rate, latency, and fallback behavior.
 - per-case result fields for validity, failure, action, policy decision,
-  dangerous action detection, escalation, safe recovery, latency, and notes.
+  dangerous action detection, escalation, safe recovery, fallback, latency, and
+  notes.
 
 Real Ollama or local GGUF execution is a later plug-in path: wire a local
 provider into this harness only after the fixture and mock-provider path stays

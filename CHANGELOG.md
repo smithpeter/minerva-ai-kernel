@@ -36,6 +36,9 @@ save local evidence for review and evaluation.
   fixture-based metrics report.
 - The current failure corpus contains 112 validated cases across 12 categories,
   with an M1 target of 15 cases per category.
+- `models/cpu_model_candidates.json` records the CPU-local model candidate
+  registry for sub-500M research without downloading weights or claiming
+  benchmark results.
 
 ### What Changed
 
@@ -62,6 +65,10 @@ save local evidence for review and evaluation.
   adapter packs, including ownership boundaries and safety requirements.
 - Added an M1 eval report showing current fixture metrics and remaining corpus
   gaps.
+- Added a machine-readable CPU-local model candidate registry and a CPU model
+  eval scoring contract covering JSON validity, failure label accuracy, safe
+  recovery decisions, escalation quality, dangerous actions, latency, and
+  fallback behavior.
 
 ### Safety Boundaries
 
@@ -103,6 +110,8 @@ save local evidence for review and evaluation.
 - [M1 roadmap task seeds](docs/m1-roadmap-task-seeds.md)
 - [CI integration surface](docs/ci-integration-surface.md)
 - [M0 launch blog post draft](docs/m0-launch-blog-post.md)
+- [CPU-local model candidate registry](models/cpu_model_candidates.json)
+- [CPU model eval scoring contract](docs/cpu-model-eval-scoring-contract.md)
 
 ### Next Tasks
 
@@ -117,10 +126,9 @@ save local evidence for review and evaluation.
   summary and artifact evidence.
 - Add SDK, agent, and CI integration examples that preserve redaction,
   policy-gating, and no-auto-repair behavior.
-- Document and evaluate the local model provider path, including Ollama or
-  OpenAI-compatible local endpoints and CPU/GGUF candidates.
+- Use the CPU-local candidate registry and scoring contract to run the first
+  real local-model comparison through Ollama or a local GGUF adapter.
 - Grow the corpus toward 15 redacted cases per required category while keeping
   dangerous-action checks at zero.
-- Expand eval reporting with JSON validity, failure label accuracy, safe
-  recovery decision rate, escalation quality, dangerous action rate, and latency
-  for real local-model candidates.
+- Implement any missing contract-complete report fields before promoting a real
+  local-model candidate.
