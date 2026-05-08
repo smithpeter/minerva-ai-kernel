@@ -72,6 +72,11 @@ save local evidence for review and evaluation.
 - Fixed package metadata so editable install exposes the documented `minerva`
   console command, uses SPDX license metadata, and limits setuptools package
   discovery to `minerva_kernel`.
+- Recorded post-metadata-fix full local release dry-run evidence for commit
+  `87dd7730a07f29c1b82de2ed937ad35c94db6e04`, including offline editable
+  install, `minerva doctor` through the installed console command, `observe`,
+  run-record inspection, `policy-check`, eval smoke, compile, 83 unit tests,
+  redaction, and destructive-intent policy-blocking evidence.
 
 ### Safety Boundaries
 
@@ -106,6 +111,7 @@ save local evidence for review and evaluation.
 
 - [M0 release readiness checklist](docs/m0-release-readiness.md)
 - [M0 local release dry-run guide](docs/m0-local-release-dry-run.md)
+- [2026-05-08 post-metadata-fix local release dry-run evidence](.minerva/release-evidence/2026-05-08-post-metadata-fix-local-release-dry-run.md)
 - [2026-05-08 local release dry-run evidence](.minerva/release-evidence/2026-05-08-local-release-dry-run.md)
 - [M0 CI and domain verification record](docs/m0-ci-domain-verification-record.md)
 - [M1 eval report](evals/m1_eval_report.md)
@@ -118,8 +124,6 @@ save local evidence for review and evaluation.
 
 ### Next Tasks
 
-- Rerun the full clean-checkout local release dry run after the package
-  metadata fix on the exact release branch or announcement commit.
 - Confirm the GitHub Actions compile/test/eval gate is green for the exact
   release branch or announcement commit.
 - Verify `minervakernel.com` DNS, TLS, and HTTPS content before any public

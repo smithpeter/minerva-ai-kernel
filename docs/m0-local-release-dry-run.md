@@ -37,6 +37,10 @@ Expected result:
   `taxonomies` are not treated as top-level import packages.
 - Local artifact: `.venv/`.
 - No remote LLM, cloud account, publish token, or deployment target is required.
+- Because this command disables build isolation, the fresh virtualenv must
+  already provide the local build backend. If an interpreter's virtualenv does
+  not seed `setuptools`, record that setup failure and rerun with a supported
+  local interpreter or venv seed without downloading dependencies.
 
 ## 2. Doctor Check
 
@@ -295,5 +299,7 @@ Record these values in the release decision or PR before marking M0 ready:
 
 ## Recorded Evidence
 
+- [2026-05-08 post-metadata-fix local release dry-run evidence](../.minerva/release-evidence/2026-05-08-post-metadata-fix-local-release-dry-run.md)
+  for commit `87dd7730a07f29c1b82de2ed937ad35c94db6e04`.
 - [2026-05-08 local release dry-run evidence](../.minerva/release-evidence/2026-05-08-local-release-dry-run.md)
   for commit `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7`.
