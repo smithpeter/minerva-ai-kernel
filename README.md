@@ -95,6 +95,7 @@ Start here:
 - [GitHub issues](docs/github-issues.md)
 - [Shared tools, isolated state](docs/shared-tools-isolated-state.md)
 - [Failure case contribution guide](docs/failure-case-contributions.md)
+- [Ecosystem contribution guide](docs/ecosystem-contributions.md)
 
 ## Repository Status
 
