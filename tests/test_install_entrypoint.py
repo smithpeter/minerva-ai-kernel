@@ -1,21 +1,17 @@
 from __future__ import annotations
 
-import base64
-import csv
-import hashlib
-import io
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
-import tomllib
 import unittest
-import zipfile
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+MIN_SETUPTOOLS_VERSION = (77,)
 
 
 class InstallEntrypointSmokeTests(unittest.TestCase):
@@ -28,15 +24,14 @@ class InstallEntrypointSmokeTests(unittest.TestCase):
         self.assertIn("Minerva doctor: repository skeleton is ready.", result.stdout)
         self.assertEqual(result.stderr, "")
 
-    def test_local_install_exposes_minerva_console_command(self) -> None:
+    def test_local_editable_install_exposes_minerva_console_command(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
-            wheel_path = _build_test_wheel(ROOT, tmp_path)
             venv_path = tmp_path / "venv"
 
             self._run([sys.executable, "-m", "venv", str(venv_path)], timeout=120)
             venv_python = _venv_executable(venv_path, "python")
-            minerva = _venv_executable(venv_path, "minerva")
+            _ensure_offline_setuptools(venv_python)
 
             self._run(
                 [
@@ -46,10 +41,31 @@ class InstallEntrypointSmokeTests(unittest.TestCase):
                     "install",
                     "--no-index",
                     "--no-deps",
-                    str(wheel_path),
+                    "--no-build-isolation",
+                    "-e",
+                    str(ROOT),
                 ],
-                timeout=120,
+                cwd=tmp_path,
+                timeout=180,
             )
+
+            top_level = self._run(
+                [
+                    str(venv_python),
+                    "-c",
+                    (
+                        "from importlib.metadata import distribution; "
+                        "print(distribution('minerva-ai-kernel').read_text('top_level.txt') or '')"
+                    ),
+                ],
+                cwd=tmp_path,
+            )
+            top_level_names = [
+                line.strip() for line in top_level.stdout.splitlines() if line.strip()
+            ]
+            self.assertEqual(["minerva_kernel"], top_level_names)
+
+            minerva = _venv_executable(venv_path, "minerva")
             result = self._run([str(minerva), "doctor"], cwd=tmp_path)
 
         self.assertIn("Minerva doctor: repository skeleton is ready.", result.stdout)
@@ -62,13 +78,10 @@ class InstallEntrypointSmokeTests(unittest.TestCase):
         cwd: str | Path | None = None,
         timeout: int = 60,
     ) -> subprocess.CompletedProcess[str]:
-        env = os.environ.copy()
-        env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
-        env["PIP_NO_CACHE_DIR"] = "1"
         result = subprocess.run(
             args,
             cwd=cwd,
-            env=env,
+            env=_base_env(),
             text=True,
             capture_output=True,
             timeout=timeout,
@@ -83,111 +96,130 @@ class InstallEntrypointSmokeTests(unittest.TestCase):
         return result
 
 
-def _build_test_wheel(root: Path, destination: Path) -> Path:
-    pyproject = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
-    project = pyproject["project"]
-    name = str(project["name"])
-    version = str(project["version"])
-    distribution = _wheel_safe(name)
-    dist_info = f"{distribution}-{version}.dist-info"
-    wheel_path = destination / f"{distribution}-{version}-py3-none-any.whl"
-    records: list[tuple[str, str, str]] = []
+def _ensure_offline_setuptools(venv_python: Path) -> None:
+    version = _setuptools_version(venv_python)
+    if version is not None and version >= MIN_SETUPTOOLS_VERSION:
+        return
 
-    with zipfile.ZipFile(wheel_path, "w", zipfile.ZIP_DEFLATED) as wheel:
-        for path in sorted((root / "minerva_kernel").glob("*.py")):
-            _write_wheel_file(wheel, records, path.relative_to(root).as_posix(), path)
-
-        _write_wheel_bytes(
-            wheel,
-            records,
-            f"{dist_info}/METADATA",
-            _metadata(project).encode("utf-8"),
-        )
-        _write_wheel_bytes(
-            wheel,
-            records,
-            f"{dist_info}/WHEEL",
-            (
-                "Wheel-Version: 1.0\n"
-                "Generator: minerva-install-entrypoint-smoke\n"
-                "Root-Is-Purelib: true\n"
-                "Tag: py3-none-any\n"
-            ).encode("utf-8"),
-        )
-        _write_wheel_bytes(
-            wheel,
-            records,
-            f"{dist_info}/entry_points.txt",
-            _entry_points(project).encode("utf-8"),
+    source = _find_compatible_setuptools_source(venv_python)
+    if source is None:
+        raise AssertionError(
+            "editable install smoke test needs setuptools>=77 available from "
+            "the fresh venv or an existing local site-packages directory"
         )
 
-        record_path = f"{dist_info}/RECORD"
-        record_bytes = _record_bytes([*records, (record_path, "", "")])
-        wheel.writestr(record_path, record_bytes)
+    target = _venv_site_packages(venv_python)
+    for existing in _setuptools_install_paths(target):
+        _remove_path(existing)
+    for path in _setuptools_install_paths(source):
+        destination = target / path.name
+        if path.is_dir():
+            shutil.copytree(path, destination, dirs_exist_ok=True)
+        else:
+            shutil.copy2(path, destination)
 
-    return wheel_path
-
-
-def _metadata(project: dict[str, object]) -> str:
-    authors = project.get("authors", [])
-    author = ""
-    if isinstance(authors, list) and authors:
-        first_author = authors[0]
-        if isinstance(first_author, dict):
-            author = str(first_author.get("name", ""))
-
-    lines = [
-        "Metadata-Version: 2.1",
-        f"Name: {project['name']}",
-        f"Version: {project['version']}",
-        f"Summary: {project.get('description', '')}",
-        f"Requires-Python: {project.get('requires-python', '')}",
-    ]
-    if author:
-        lines.append(f"Author: {author}")
-    return "\n".join(lines) + "\n"
+    version = _setuptools_version(venv_python)
+    if version is None or version < MIN_SETUPTOOLS_VERSION:
+        raise AssertionError("failed to seed offline setuptools>=77 into test venv")
 
 
-def _entry_points(project: dict[str, object]) -> str:
-    scripts = project.get("scripts")
-    if not isinstance(scripts, dict) or "minerva" not in scripts:
-        raise AssertionError("pyproject.toml must define the minerva console script")
-
-    lines = ["[console_scripts]"]
-    for name, target in sorted(scripts.items()):
-        lines.append(f"{name} = {target}")
-    return "\n".join(lines) + "\n"
+def _find_compatible_setuptools_source(venv_python: Path) -> Path | None:
+    for candidate in _candidate_site_packages():
+        version = _setuptools_version(venv_python, pythonpath=candidate)
+        if version is not None and version >= MIN_SETUPTOOLS_VERSION:
+            return candidate
+    return None
 
 
-def _write_wheel_file(
-    wheel: zipfile.ZipFile,
-    records: list[tuple[str, str, str]],
-    arcname: str,
-    path: Path,
-) -> None:
-    _write_wheel_bytes(wheel, records, arcname, path.read_bytes())
+def _candidate_site_packages() -> list[Path]:
+    candidates: list[Path] = []
+    for entry in sys.path:
+        if not entry:
+            continue
+        path = Path(entry)
+        if (path / "setuptools").is_dir():
+            candidates.append(path)
+
+    local_venv_lib = ROOT / ".venv" / "lib"
+    if local_venv_lib.is_dir():
+        candidates.extend(
+            path
+            for path in local_venv_lib.glob("python*/site-packages")
+            if (path / "setuptools").is_dir()
+        )
+
+    deduped: list[Path] = []
+    seen: set[Path] = set()
+    for candidate in candidates:
+        resolved = candidate.resolve()
+        if resolved not in seen:
+            deduped.append(candidate)
+            seen.add(resolved)
+    return deduped
 
 
-def _write_wheel_bytes(
-    wheel: zipfile.ZipFile,
-    records: list[tuple[str, str, str]],
-    arcname: str,
-    data: bytes,
-) -> None:
-    wheel.writestr(arcname, data)
-    digest = base64.urlsafe_b64encode(hashlib.sha256(data).digest()).rstrip(b"=")
-    records.append((arcname, f"sha256={digest.decode('ascii')}", str(len(data))))
+def _setuptools_install_paths(site_packages: Path) -> list[Path]:
+    names = ["setuptools", "_distutils_hack", "pkg_resources", "distutils-precedence.pth"]
+    paths = [site_packages / name for name in names]
+    paths.extend(site_packages.glob("setuptools-*.dist-info"))
+    return [path for path in paths if path.exists()]
 
 
-def _record_bytes(rows: list[tuple[str, str, str]]) -> bytes:
-    output = io.StringIO()
-    writer = csv.writer(output, lineterminator="\n")
-    writer.writerows(rows)
-    return output.getvalue().encode("utf-8")
+def _setuptools_version(
+    python: Path,
+    *,
+    pythonpath: Path | None = None,
+) -> tuple[int, ...] | None:
+    env = _base_env()
+    if pythonpath is not None:
+        env["PYTHONPATH"] = str(pythonpath)
+    result = subprocess.run(
+        [str(python), "-c", "import setuptools; print(setuptools.__version__)"],
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    if result.returncode != 0:
+        return None
+    return _version_tuple(result.stdout.strip())
 
 
-def _wheel_safe(value: str) -> str:
-    return re.sub(r"[^\w\d.]+", "_", value, flags=re.ASCII)
+def _version_tuple(version: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in re.findall(r"\d+", version)[:3])
+
+
+def _venv_site_packages(venv_python: Path) -> Path:
+    result = subprocess.run(
+        [
+            str(venv_python),
+            "-c",
+            "import sysconfig; print(sysconfig.get_paths()['purelib'])",
+        ],
+        env=_base_env(),
+        text=True,
+        capture_output=True,
+        timeout=30,
+        check=True,
+    )
+    return Path(result.stdout.strip())
+
+
+def _remove_path(path: Path) -> None:
+    if path.is_dir():
+        shutil.rmtree(path)
+    else:
+        path.unlink()
+
+
+def _base_env() -> dict[str, str]:
+    env = os.environ.copy()
+    env["PIP_CONFIG_FILE"] = os.devnull
+    env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
+    env["PIP_NO_CACHE_DIR"] = "1"
+    env["PIP_NO_INPUT"] = "1"
+    return env
 
 
 def _venv_executable(venv_path: Path, executable: str) -> Path:

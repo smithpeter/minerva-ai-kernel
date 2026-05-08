@@ -26,12 +26,15 @@ git clone https://github.com/smithpeter/minerva-ai-kernel.git
 cd minerva-ai-kernel
 python3 -m venv .venv
 . .venv/bin/activate
-python3 -m pip install --no-deps -e .
+python3 -m pip install --no-index --no-deps --no-build-isolation -e .
 ```
 
 Expected result:
 
 - The `minerva` console command is available in the activated virtualenv.
+- Setuptools installs only the intended `minerva_kernel` Python package; data
+  directories such as `evals`, `models`, `policies`, `adapters`, and
+  `taxonomies` are not treated as top-level import packages.
 - Local artifact: `.venv/`.
 - No remote LLM, cloud account, publish token, or deployment target is required.
 

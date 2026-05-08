@@ -69,6 +69,9 @@ save local evidence for review and evaluation.
   eval scoring contract covering JSON validity, failure label accuracy, safe
   recovery decisions, escalation quality, dangerous actions, latency, and
   fallback behavior.
+- Fixed package metadata so editable install exposes the documented `minerva`
+  console command, uses SPDX license metadata, and limits setuptools package
+  discovery to `minerva_kernel`.
 
 ### Safety Boundaries
 
@@ -115,9 +118,8 @@ save local evidence for review and evaluation.
 
 ### Next Tasks
 
-- Fix the package metadata blocker from the local release dry run so editable
-  install exposes the documented `minerva` console command from a fresh
-  virtualenv.
+- Rerun the full clean-checkout local release dry run after the package
+  metadata fix on the exact release branch or announcement commit.
 - Confirm the GitHub Actions compile/test/eval gate is green for the exact
   release branch or announcement commit.
 - Verify `minervakernel.com` DNS, TLS, and HTTPS content before any public

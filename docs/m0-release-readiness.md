@@ -15,8 +15,8 @@ the failure state, policy-checks a bounded decision, and saves a local run recor
 
 | Area | Go Criterion | Current Status | Evidence |
 | --- | --- | --- | --- |
-| CLI | `minerva observe -- <command>` captures command, cwd, stdout/stderr tails, exit code, duration, runtime metadata, decision, policy result, and saved run record. | Module entry path verified locally; editable install currently blocks the documented `minerva` console command. | README quickstart, [M0 demo script](../examples/m0-demo-script.md), and [local release dry-run evidence](../.minerva/release-evidence/2026-05-08-local-release-dry-run.md). |
-| CLI | `minerva diagnose failure.json` can read an observation-shaped input and produce a structured decision. | Module entry path remains ready for local verification; console command path depends on fixing editable install. | [Decision Schema v0](decision-schema-v0.md), issue tracker scope, and [local release dry-run evidence](../.minerva/release-evidence/2026-05-08-local-release-dry-run.md). |
+| CLI | `minerva observe -- <command>` captures command, cwd, stdout/stderr tails, exit code, duration, runtime metadata, decision, policy result, and saved run record. | Module entry path verified locally; editable install now exposes the documented `minerva` console command. | README quickstart, [M0 demo script](../examples/m0-demo-script.md), [install entrypoint test](../tests/test_install_entrypoint.py), and [local release dry-run evidence](../.minerva/release-evidence/2026-05-08-local-release-dry-run.md). |
+| CLI | `minerva diagnose failure.json` can read an observation-shaped input and produce a structured decision. | Module entry path remains ready for local verification; console command path is unblocked by package metadata. | [Decision Schema v0](decision-schema-v0.md), [install entrypoint test](../tests/test_install_entrypoint.py), issue tracker scope, and [local release dry-run evidence](../.minerva/release-evidence/2026-05-08-local-release-dry-run.md). |
 | Tests | `python3 -m compileall minerva_kernel` passes from a clean checkout. | Passed locally for commit `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7` on 2026-05-08. | [Local release dry-run evidence](../.minerva/release-evidence/2026-05-08-local-release-dry-run.md). |
 | Tests | `python3 -m unittest discover -s tests` passes from a clean checkout. | Passed locally for commit `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7` on 2026-05-08. | 77 tests ran, OK; [local release dry-run evidence](../.minerva/release-evidence/2026-05-08-local-release-dry-run.md). |
 | Eval | `python3 -m minerva_kernel.eval_smoke` passes and reports the expected deterministic M0 fixture result. | Passed locally for commit `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7` on 2026-05-08. | 5/5 smoke cases passed, 0 failed; [local release dry-run evidence](../.minerva/release-evidence/2026-05-08-local-release-dry-run.md). |
@@ -45,10 +45,13 @@ and safety checks.
 Latest local evidence for commit `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7`:
 [2026-05-08 local release dry-run evidence](../.minerva/release-evidence/2026-05-08-local-release-dry-run.md).
 It records passing compile, unit tests, eval smoke, run-record inspection,
-policy checks, and redaction checks. It also records an install blocker:
-editable install currently fails package metadata discovery, so the `minerva`
-console script was unavailable and CLI checks used the module entry point from
-the checkout.
+policy checks, and redaction checks. That evidence recorded an install blocker:
+editable install failed package metadata discovery, so the `minerva` console
+script was unavailable and CLI checks used the module entry point from the
+checkout. T35 fixed the package metadata after that snapshot; the install
+entrypoint test now verifies an offline editable install in a fresh virtualenv
+and confirms the distribution metadata exposes only `minerva_kernel` as a
+top-level package.
 
 Use the [M0 CI and domain verification record](m0-ci-domain-verification-record.md)
 to record the remote GitHub Actions status, `minervakernel.com` DNS and TLS
@@ -86,12 +89,12 @@ Completed or ready for release verification:
 - T31 local verification passed: `compileall`, 77 unit tests, eval smoke 5/5,
   run-record inspection, policy checks, and redaction checks for commit
   `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7`.
+- T35 package metadata verification fixed the editable-install blocker and
+  exposes the documented `minerva` console command from a fresh virtualenv.
 
 Remaining risks:
 
 - The release decision still needs a fresh local compile/test run and eval smoke output if the release commit changes after this snapshot.
-- Editable package install must be fixed so the documented `minerva` console
-  command path works from a fresh virtualenv.
 - Remote GitHub Actions status is not captured in this document and must be green before announcement.
 - Domain resolution, TLS, and final public destination for `minervakernel.com` must be verified outside this local checkout.
 - The smoke eval is a narrow wiring signal, not a benchmark or production reliability claim.
@@ -103,7 +106,7 @@ Launch blockers:
 - Any failing compile, unit test, or eval smoke command on the release commit.
 - Any policy path that allows destructive commands, arbitrary model-generated shell execution, credential access, or unsafe escalation by default.
 - Any demo step that requires a remote LLM for the minimum M0 path.
-- Any package metadata issue that prevents the documented local install path
+- Any recurrence of a package metadata issue that prevents the documented local install path
   from exposing the `minerva` console command.
 - Any public doc that implies M0 auto-repairs systems, replaces CI/monitoring, or is a full AIOps platform.
 - Any unredacted secret, credential, private log, full environment dump, or proprietary data in docs, examples, fixtures, or release materials.
