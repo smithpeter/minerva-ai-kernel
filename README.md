@@ -85,6 +85,8 @@ Start here:
 - [M0 local release dry-run guide](docs/m0-local-release-dry-run.md)
 - [M0 launch blog post draft](docs/m0-launch-blog-post.md)
 - [M0 demo script](examples/m0-demo-script.md)
+- [Model strategy and local provider path](docs/model-strategy.md)
+- [Sub-500M CPU model plan and eval report shape](docs/sub-500m-cpu-model-plan.md)
 - [Product strategy](docs/product-strategy.md)
 - [Questions and requirements](docs/questions-and-requirements.md)
 - [Execution plan and founder role](docs/execution-plan-and-founder-role.md)
