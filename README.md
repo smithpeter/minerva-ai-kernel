@@ -78,6 +78,8 @@ LLM interprets. Policy authorizes. Executor acts.
 
 Start here:
 
+- [Minimal Python SDK decision example](examples/minimal_sdk_decision.py)
+- [Agent tool failure guide](examples/agent-tool-failure.md)
 - [M1 roadmap task seeds](docs/m1-roadmap-task-seeds.md)
 - [M0 release readiness checklist](docs/m0-release-readiness.md)
 - [M0 local release dry-run guide](docs/m0-local-release-dry-run.md)

@@ -109,11 +109,30 @@ from minerva_kernel import Minerva, Observation
 try:
     result = tool.run(args)
 except Exception as exc:
-    observation = Observation.from_exception(tool="search", exc=exc)
-    decision = Minerva().decide(observation)
+    observation = Observation(
+        command="agent_tool:search",
+        cwd="/workspace/example-agent",
+        exit_code=None,
+        stdout_tail="",
+        stderr_tail=f"{exc.__class__.__name__}: {exc}",
+        duration_ms=0,
+        source="agent_tool",
+        policy_summary="failed tool call captured; action is advisory",
+        runtime={"agent": {"tool_name": "search", "input_keys": ["query"]}},
+    )
+    diagnosis = Minerva().decide(observation)
+    if diagnosis.policy_decision.allowed:
+        decision = diagnosis.decision
 ```
 
 This lets existing agent frameworks call Minerva when tools fail.
+Decisions are advisory until policy allows them, and adapters must not execute
+Minerva-proposed actions automatically.
+
+Concrete local examples:
+
+- [Minimal Python SDK decision example](../examples/minimal_sdk_decision.py)
+- [Agent tool failure guide](../examples/agent-tool-failure.md)
 
 ### Level 4: Local Daemon
 

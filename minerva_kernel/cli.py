@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 
 from .ci_render import (
@@ -11,38 +10,9 @@ from .ci_render import (
     render_markdown_summary_from_file,
 )
 from .observe import DEFAULT_TIMEOUT_SECONDS, observe_command, save_run_record
-from .planner import build_prompt
-from .policy import validate_action, validate_payload
+from .policy import validate_payload
 from .providers import ModelProvider
-from .redaction import RedactionSummary, merge_redaction_summaries
-from .router import LocalLLMRouter
-from .types import Decision, Observation, PolicyDecision
-
-
-@dataclass(frozen=True)
-class Diagnosis:
-    decision: Decision
-    policy_decision: PolicyDecision
-    redactions: RedactionSummary | None
-
-
-def diagnose_file(path: str | Path, provider: ModelProvider | None = None) -> Diagnosis:
-    observation = _load_observation(path)
-    return diagnose_observation(observation, provider=provider)
-
-
-def diagnose_observation(
-    observation: Observation, provider: ModelProvider | None = None
-) -> Diagnosis:
-    redacted_observation = observation.redacted()
-    messages = build_prompt(redacted_observation)
-    decision = LocalLLMRouter(provider=provider).propose(messages)
-    policy_decision = validate_action(decision)
-    redactions = _merge_optional_redactions(
-        redacted_observation.redactions,
-        decision.redactions,
-    )
-    return Diagnosis(decision, policy_decision, redactions)
+from .sdk import Diagnosis, diagnose_file, diagnose_observation
 
 
 def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -> None:
@@ -153,13 +123,6 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
     parser.print_help()
 
 
-def _load_observation(path: str | Path) -> Observation:
-    payload = json.loads(Path(path).read_text(encoding="utf-8"))
-    if not isinstance(payload, dict):
-        raise ValueError("observation JSON must be an object")
-    return Observation.from_dict(payload)
-
-
 def _normalize_observed_command(values: list[str]) -> list[str]:
     command = list(values)
     if command and command[0] == "--":
@@ -187,16 +150,6 @@ def _print_diagnosis(diagnosis: Diagnosis) -> None:
             f"count={diagnosis.redactions.count} "
             f"types={', '.join(diagnosis.redactions.types)}"
         )
-
-
-def _merge_optional_redactions(
-    *summaries: RedactionSummary | None,
-) -> RedactionSummary | None:
-    present = [summary for summary in summaries if summary and summary.count]
-    if not present:
-        return None
-    merged = merge_redaction_summaries(*present)
-    return merged if merged.count else None
 
 
 def _display_path(path: Path) -> str:
