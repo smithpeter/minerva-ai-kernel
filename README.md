@@ -121,11 +121,16 @@ diagnostic only: it publishes bounded evidence, exits with the observed command
 status, and does not perform auto-repair or execute Minerva-proposed actions.
 
 Before a public release, collect repeatable GitHub Actions and
-`minervakernel.com` DNS/TLS/HTTPS evidence with:
+`minervakernel.com` DNS/TLS/HTTPS and brand-contamination evidence with:
 
 ```bash
 python3 scripts/check-release-readiness.py --content-reviewed "Verified public Minerva page"
 ```
+
+The readiness checker keeps TLS verification enabled, requires Minerva
+brand/content signals in the public HTTPS page, and rejects VoxSign markers in
+redirects or page content. The `--content-reviewed` note records human review;
+it does not override TLS validation or the automated brand guard.
 
 For local offline editable-install readiness without network access, run:
 

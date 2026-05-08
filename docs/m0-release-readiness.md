@@ -25,7 +25,7 @@ the failure state, policy-checks a bounded decision, and saves a local run recor
 | CI | GitHub Actions compile/test/eval smoke gate is green on the release branch or announcement commit. | Prepared to rerun on explicit Python 3.11, matching the known-good fresh-venv release evidence; remote status is not verified by this local document. | README CI gate, [CI integration recipe](integration-recipes.md), and [M0 CI and domain verification record](m0-ci-domain-verification-record.md); remote CI must be checked before go. |
 | Docs | README, launch draft, demo script, local dry-run guide, schemas, contribution guide, and release readiness doc are linked and internally consistent. | README and release readiness link the dry-run guide; launch, demo, schemas, and examples index remain linked. | README project docs, [M0 local release dry-run guide](m0-local-release-dry-run.md), and this file. |
 | Demo | Demo command, saved run record inspection, policy-check step, eval smoke step, and safety checks can be run without a remote LLM. | Passed in the latest local dry run without a remote LLM. | [M0 demo script](../examples/m0-demo-script.md), [M0 local release dry-run guide](m0-local-release-dry-run.md), and [post-metadata-fix local release dry-run evidence](../.minerva/release-evidence/2026-05-08-post-metadata-fix-local-release-dry-run.md). |
-| Domain | `minervakernel.com` resolves to the intended public project surface or announcement destination. | Not verified by this local document. | Release owner must verify DNS, TLS, and target content using the [M0 CI and domain verification record](m0-ci-domain-verification-record.md) before go. |
+| Domain | `minervakernel.com` resolves to the intended public project surface or announcement destination. | Blocked as of 2026-05-08: direct TLS diagnostics showed `CN=test.voxsign.net`, and a certificate-verification-bypassed fetch returned VoxSign title/content. | Release owner must fix the external domain target, then verify DNS, TLS, Minerva brand signals, and target content using the [M0 CI and domain verification record](m0-ci-domain-verification-record.md) before go. |
 | Known Limitations | Public materials plainly say M0 is not auto-repair, not full AIOps, not a CI replacement, not a monitoring replacement, and not dependent on a remote LLM for minimum function. | Documented in launch and demo materials. | [M0 launch draft](m0-launch-blog-post.md) and [M0 demo script](../examples/m0-demo-script.md). |
 
 ## Local Release Verification
@@ -68,9 +68,10 @@ python3 scripts/check-release-readiness.py --content-reviewed "Verified public M
 
 The script reports local checkout metadata, checks GitHub Actions for the
 current commit when `gh` and network access are available, checks DNS/TLS/HTTPS
-for `minervakernel.com`, checks that the local offline editable-install build
-backend is importable in a bounded set of local Python candidates, and keeps
-output bounded for public issue comments. Use
+for `minervakernel.com`, fails HTTPS readiness when the page lacks Minerva
+brand/content signals or includes VoxSign markers, checks that the local
+offline editable-install build backend is importable in a bounded set of local
+Python candidates, and keeps output bounded for public issue comments. Use
 `python3 scripts/check-release-readiness.py --skip-external --install-backend auto`
 to verify the local checkout and discover a local install-backend target when
 external access is unavailable.
@@ -121,7 +122,9 @@ Remaining risks:
 
 - The release decision still needs a fresh local compile/test run and eval smoke output if the release commit changes after this snapshot.
 - Remote GitHub Actions status is not captured in this document and must be green before announcement.
-- Domain resolution, TLS, and final public destination for `minervakernel.com` must be verified outside this local checkout.
+- Domain resolution, TLS, and final public destination for `minervakernel.com`
+  are currently blocked until the external target serves a certificate valid
+  for `minervakernel.com` and a Minerva page, not VoxSign.
 - The no-build-isolation editable install path requires the fresh virtualenv to
   already include the local build backend; Python 3.14 and Python 3.13 venvs on
   the T36 host did not seed `setuptools`. The readiness checker now reports
@@ -140,7 +143,8 @@ Launch blockers:
   `minerva` console command.
 - Any public doc that implies M0 auto-repairs systems, replaces CI/monitoring, or is a full AIOps platform.
 - Any unredacted secret, credential, private log, full environment dump, or proprietary data in docs, examples, fixtures, or release materials.
-- Missing or broken public domain target for `minervakernel.com`.
+- Missing, broken, mismatched, or VoxSign-contaminated public domain target for
+  `minervakernel.com`.
 - Red remote CI on the release branch or announcement commit.
 
 ## Go / No-Go Criteria
@@ -151,7 +155,8 @@ Go when all of the following are true:
 - GitHub Actions is green for the same release commit.
 - Demo dry run works from a clean checkout and produces a saved `.minerva/runs/` record.
 - Public docs link to the release readiness checklist, launch draft, demo script, schemas, and known limitations.
-- `minervakernel.com` resolves correctly and points to the intended public project surface.
+- `minervakernel.com` resolves correctly, serves a certificate valid for
+  `minervakernel.com`, and returns the intended Minerva public page.
 - The announcement uses only the narrow M0 claim and preserves the explicit non-claims.
 
 No-go if any of the following are true:
@@ -160,5 +165,6 @@ No-go if any of the following are true:
 - The demo requires cloud access, a remote LLM, write tools, or manual repair to show the minimum value.
 - Policy permits an unsafe action by default or does not explain a block reason.
 - Redaction leaves obvious secrets in model input or saved records.
-- Domain or public docs are not ready.
+- Domain, including TLS certificate and Minerva page content, or public docs are
+  not ready.
 - Known limitations are hidden, softened, or contradicted by launch copy.

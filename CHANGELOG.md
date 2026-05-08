@@ -62,6 +62,15 @@ save local evidence for review and evaluation.
   reports the first local Python candidate that can import
   `setuptools.build_meta`, or a bounded failed-candidate list with the next
   action.
+- Added a domain brand-contamination guard to the release readiness checker:
+  public HTTPS content must include Minerva signals and must not include
+  VoxSign markers, with offline unit tests for pass, missing-brand fail, and
+  VoxSign fail behavior.
+- Recorded the current `minervakernel.com` no-go blocker: on 2026-05-08, TLS
+  diagnostics for commit `109b524467b6fb6cf78f00c86416b070c4691226` showed
+  `CN=test.voxsign.net`, and a certificate-verification-bypassed fetch returned
+  VoxSign page content. The required external fix is a certificate valid for
+  `minervakernel.com` and an intended Minerva page, not VoxSign.
 - Recorded full local release dry-run evidence for commit
   `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7`, including install/smoke,
   `doctor`, `observe`, run-record inspection, `policy-check`, eval smoke,
@@ -138,7 +147,8 @@ save local evidence for review and evaluation.
 
 - Confirm the GitHub Actions compile/test/eval gate is green for the exact
   release branch or announcement commit.
-- Verify `minervakernel.com` DNS, TLS, and HTTPS content before any public
+- Fix and verify `minervakernel.com` DNS, TLS certificate identity, HTTPS
+  Minerva page content, and VoxSign contamination guard before any public
   announcement.
 - Continue M1 CI renderer work so every branch publishes bounded Minerva
   summary and artifact evidence.

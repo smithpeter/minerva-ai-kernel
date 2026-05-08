@@ -96,6 +96,58 @@ class ReleaseReadinessCheckTests(unittest.TestCase):
         self.assertEqual(self.checker.readiness_exit_code([result]), 1)
         self.assertIn("all returned runs must be completed", "\n".join(result.details))
 
+    def test_domain_https_result_passes_minerva_brand_signal(self) -> None:
+        result = self.checker.domain_https_result_from_response(
+            domain="minervakernel.com",
+            status_code=200,
+            final_url="https://minervakernel.com/",
+            content_type="text/html; charset=utf-8",
+            body=(
+                b"<html><head><title>Minerva AI Kernel</title></head>"
+                b"<body>CPU-local failure interpreter for CI/CD.</body></html>"
+            ),
+        )
+
+        self.assertEqual(result.status, "pass")
+        self.assertEqual(self.checker.readiness_exit_code([result]), 0)
+        details = "\n".join(result.details)
+        self.assertIn("brand_guard=pass", details)
+        self.assertIn("minerva_signals=", details)
+        self.assertIn("rejected_markers=none", details)
+
+    def test_domain_https_result_fails_without_minerva_brand_signal(self) -> None:
+        result = self.checker.domain_https_result_from_response(
+            domain="minervakernel.com",
+            status_code=200,
+            final_url="https://minervakernel.com/",
+            content_type="text/html",
+            body=b"<html><head><title>Coming Soon</title></head><body>Hosted page.</body></html>",
+        )
+
+        self.assertEqual(result.status, "fail")
+        self.assertEqual(self.checker.readiness_exit_code([result]), 1)
+        details = "\n".join(result.details)
+        self.assertIn("brand_guard=fail", details)
+        self.assertIn("minerva_signals=missing", details)
+
+    def test_domain_https_result_rejects_voxsign_brand_marker(self) -> None:
+        result = self.checker.domain_https_result_from_response(
+            domain="minervakernel.com",
+            status_code=200,
+            final_url="https://minervakernel.com/",
+            content_type="text/html",
+            body=(
+                b"<html><head><title>VoxSign</title></head>"
+                b"<body>VoxSign preview for Minerva.</body></html>"
+            ),
+        )
+
+        self.assertEqual(result.status, "fail")
+        self.assertEqual(self.checker.readiness_exit_code([result]), 1)
+        details = "\n".join(result.details)
+        self.assertIn("brand_guard=fail", details)
+        self.assertIn("rejected_markers=voxsign", details)
+
     def test_install_backend_result_passes_when_build_meta_imports(self) -> None:
         result = self.checker.install_backend_result_from_probe(
             subprocess.CompletedProcess(

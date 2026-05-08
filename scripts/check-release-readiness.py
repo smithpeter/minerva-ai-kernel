@@ -40,6 +40,19 @@ INSTALL_BACKEND_AUTO_COMMANDS = (
     "python3.8",
 )
 
+MINERVA_DOMAIN_BRAND_SIGNALS = (
+    "minerva",
+    "minervakernel",
+    "minervakernel.com",
+    "cpu-local failure interpreter",
+    "ai reliability kernel",
+)
+REJECTED_DOMAIN_BRAND_MARKERS = (
+    "test.voxsign.net",
+    "voxsign.net",
+    "voxsign",
+)
+
 SECRET_PATTERNS = (
     re.compile(r"gh[pousr]_[A-Za-z0-9_]{20,}"),
     re.compile(r"github_pat_[A-Za-z0-9_]{20,}"),
@@ -716,9 +729,11 @@ def check_tls(domain: str, *, timeout: float, skip: bool) -> CheckResult:
             [f"TLS validation failed: {bounded_text(type(exc).__name__)}"],
         )
 
+    subject = certificate_name(cert.get("subject", ()))
+    issuer = certificate_name(cert.get("issuer", ()))
     details = [
-        "subject=" + certificate_name(cert.get("subject", ())),
-        "issuer=" + certificate_name(cert.get("issuer", ())),
+        "subject=" + subject,
+        "issuer=" + issuer,
         "not_after=" + bounded_text(str(cert.get("notAfter", "<unknown>"))),
     ]
     sans = [
@@ -728,6 +743,19 @@ def check_tls(domain: str, *, timeout: float, skip: bool) -> CheckResult:
     ]
     if sans:
         details.append("dns_san=" + ", ".join(sans[:MAX_LIST_ITEMS]))
+    rejected_markers = brand_marker_matches(
+        " ".join([subject, issuer, " ".join(sans)]),
+        REJECTED_DOMAIN_BRAND_MARKERS,
+    )
+    details.append(rejected_brand_markers_detail(rejected_markers))
+    if rejected_markers:
+        return result(
+            "domain_tls",
+            "fail",
+            "Python ssl",
+            "network, public CA trust, and Minerva certificate identity",
+            details,
+        )
     return result("domain_tls", "pass", "Python ssl", "network and public CA trust", details)
 
 
@@ -774,22 +802,55 @@ def check_https(domain: str, *, timeout: float, skip: bool) -> CheckResult:
             [f"HTTPS request failed: {bounded_text(type(exc).__name__)}"],
         )
 
+    return domain_https_result_from_response(
+        domain=domain,
+        status_code=status_code,
+        final_url=final_url,
+        content_type=content_type,
+        body=body,
+    )
+
+
+def domain_https_result_from_response(
+    *,
+    domain: str,
+    status_code: int,
+    final_url: str,
+    content_type: str,
+    body: bytes,
+) -> CheckResult:
     parsed = urllib.parse.urlparse(final_url)
     title = html_title(body, content_type)
+    body_text = response_text(body, content_type)
+    content_brand_text = " ".join([title, body_text])
+    rejection_text = " ".join([final_url, title, body_text])
+    minerva_signals = brand_marker_matches(
+        content_brand_text,
+        MINERVA_DOMAIN_BRAND_SIGNALS,
+    )
+    rejected_markers = brand_marker_matches(
+        rejection_text,
+        REJECTED_DOMAIN_BRAND_MARKERS,
+    )
+    scheme_ok = parsed.scheme == "https"
+    status_ok = 200 <= status_code < 400
+    brand_ok = bool(minerva_signals) and not rejected_markers
     details = [
         f"status={status_code}",
         f"final_url={bounded_text(final_url)}",
         f"final_host={bounded_text(parsed.netloc or '<unknown>')}",
         f"content_type={bounded_text(content_type)}",
         f"title={title}",
+        "transport_guard=" + ("https" if scheme_ok else "non_https_final_url"),
+        domain_brand_guard_detail(minerva_signals, rejected_markers),
         "content_review=manual release-owner confirmation still required",
     ]
-    status = "pass" if 200 <= status_code < 400 and parsed.scheme == "https" else "fail"
+    status = "pass" if status_ok and scheme_ok and brand_ok else "fail"
     return result(
         "domain_https",
         status,
         "Python urllib",
-        "network and HTTPS endpoint",
+        "network, HTTPS endpoint, and Minerva brand guard",
         details,
     )
 
@@ -860,18 +921,56 @@ def dig_details(domain: str, *, timeout: float) -> list[str]:
     return details
 
 
-def html_title(body: bytes, content_type: str) -> str:
+def response_text(body: bytes, content_type: str) -> str:
     charset = "utf-8"
     match = re.search(r"charset=([^;\s]+)", content_type, flags=re.IGNORECASE)
     if match:
         charset = match.group(1).strip("\"'")
     try:
-        text = body.decode(charset, errors="replace")
+        return body.decode(charset, errors="replace")
     except LookupError:
-        text = body.decode("utf-8", errors="replace")
+        return body.decode("utf-8", errors="replace")
+
+
+def html_title(body: bytes, content_type: str) -> str:
+    text = response_text(body, content_type)
     parser = TitleParser()
     parser.feed(text)
     return parser.title
+
+
+def brand_marker_matches(text: str, markers: Sequence[str]) -> list[str]:
+    normalized = re.sub(r"\s+", " ", text.casefold())
+    return [marker for marker in markers if marker.casefold() in normalized]
+
+
+def domain_brand_guard_detail(
+    minerva_signals: Sequence[str], rejected_markers: Sequence[str]
+) -> str:
+    outcome = "pass" if minerva_signals and not rejected_markers else "fail"
+    signals = (
+        ", ".join(minerva_signals[:MAX_LIST_ITEMS])
+        if minerva_signals
+        else "missing"
+    )
+    rejected = (
+        ", ".join(rejected_markers[:MAX_LIST_ITEMS])
+        if rejected_markers
+        else "none"
+    )
+    return (
+        f"brand_guard={outcome}; minerva_signals={signals}; "
+        f"rejected_markers={rejected}"
+    )
+
+
+def rejected_brand_markers_detail(rejected_markers: Sequence[str]) -> str:
+    value = (
+        ", ".join(rejected_markers[:MAX_LIST_ITEMS])
+        if rejected_markers
+        else "none"
+    )
+    return f"rejected_brand_markers={value}"
 
 
 def certificate_name(value: object) -> str:
