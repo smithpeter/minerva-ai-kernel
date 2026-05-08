@@ -1,12 +1,16 @@
 """Minerva AI reliability kernel."""
 
 from .policy import PolicyRuntime, validate_action, validate_payload
+from .providers import LocalOpenAICompatibleProvider, MockModelProvider, ModelProvider
 from .redaction import RedactionSummary, redact_text, redact_value
 from .types import Decision, INSTRUCTION_SET_V0, Observation
 
 __all__ = [
     "Decision",
     "INSTRUCTION_SET_V0",
+    "LocalOpenAICompatibleProvider",
+    "MockModelProvider",
+    "ModelProvider",
     "Observation",
     "PolicyRuntime",
     "RedactionSummary",

@@ -10,7 +10,7 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T2 | #2 | done | Kernel | Define Decision Schema and Instruction Set v0 |
 | T3 | #5 | done | Security | Implement Policy Runtime v0 and dangerous action tests |
 | T4 | #6 | done | Security | Implement redaction v0 before model input |
-| T5 | #9 | pending | Kernel | Add local model provider abstraction and mock provider |
+| T5 | #9 | done | Kernel | Add local model provider abstraction and mock provider |
 | T6 | #3 | pending | Kernel | Implement `minerva diagnose failure.json` |
 | T7 | #4 | pending | Kernel | Implement `minerva observe -- <command>` |
 | T8 | #8 | pending | Eval | Implement eval smoke runner v0 |
