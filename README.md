@@ -86,7 +86,9 @@ bash scripts/check-contamination.sh
 bash scripts/agent-loop.sh T1
 ```
 
-These scripts are scoped to `/Users/zouyongming/projects/minerva-ai-kernel` and must not be used from VoxSign.
+By default these scripts are scoped to `/Users/zouyongming/projects/minerva-ai-kernel`.
+On another machine, set `MINERVA_PROJECT_ROOT` to that clone path before running the automation.
+They must not be used from VoxSign.
 
 For bounded automation, run one task tick:
 
@@ -94,16 +96,35 @@ For bounded automation, run one task tick:
 bash scripts/ai-team-tick.sh
 ```
 
-To install a macOS launchd job that runs one tick every 30 minutes:
+To install a macOS `launchd` job that runs one tick every 30 minutes:
 
 ```bash
 bash scripts/install-ai-team-launchd.sh
 ```
 
-To stop it:
+To install a Linux `systemd --user` timer that runs one tick every 30 minutes:
+
+```bash
+bash scripts/install-ai-team-systemd-user.sh
+```
+
+To stop macOS automation:
 
 ```bash
 bash scripts/uninstall-ai-team-launchd.sh
+```
+
+To stop Linux automation:
+
+```bash
+bash scripts/uninstall-ai-team-systemd-user.sh
+```
+
+Check Linux timer status and logs:
+
+```bash
+systemctl --user status minerva-ai-team-tick.timer
+journalctl --user -u minerva-ai-team-tick.service -n 100
 ```
 
 The local loop supports Codex and Claude Code:

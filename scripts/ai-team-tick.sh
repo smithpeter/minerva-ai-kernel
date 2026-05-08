@@ -3,10 +3,10 @@ set -euo pipefail
 
 # Run one bounded Minerva AI-team task tick.
 #
-# This script is designed for launchd/cron.
+# This script is designed for launchd, systemd user timers, or cron.
 # It selects the first pending task from .tasks/board.md and runs one worker.
 
-ROOT="/Users/zouyongming/projects/minerva-ai-kernel"
+ROOT="${MINERVA_PROJECT_ROOT:-/Users/zouyongming/projects/minerva-ai-kernel}"
 cd "$ROOT"
 
 bash scripts/check-project-boundary.sh

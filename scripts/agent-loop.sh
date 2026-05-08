@@ -12,8 +12,10 @@ set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 
-if [[ "$ROOT" != "/Users/zouyongming/projects/minerva-ai-kernel" ]]; then
-    printf 'ERROR: expected Minerva root, got %s\n' "$ROOT"
+EXPECTED_ROOT="${MINERVA_PROJECT_ROOT:-/Users/zouyongming/projects/minerva-ai-kernel}"
+
+if [[ "$ROOT" != "$EXPECTED_ROOT" ]]; then
+    printf 'ERROR: expected Minerva root %s, got %s\n' "$EXPECTED_ROOT" "$ROOT"
     exit 2
 fi
 
@@ -94,7 +96,7 @@ while true; do
     run_count=$((run_count + 1))
     printf '\n[%s] Run #%s: %s\n\n' "$TID" "$run_count" "$task_title"
 
-    run_worker "You are a Minerva AI team worker running as ${TID}. Before editing, confirm git root is /Users/zouyongming/projects/minerva-ai-kernel. Do not read or modify /Users/zouyongming/VoxSign or unrelated repositories. Read ${TASK_FILE} and execute only that task. Set Status to in_progress at start. Respect Allowed Files and Non-Goals. Run the listed Test / Eval command before completion. Set Status to done only when acceptance criteria are met. Write concrete results in the Output section."
+    run_worker "You are a Minerva AI team worker running as ${TID}. Before editing, confirm git root is ${EXPECTED_ROOT}. Do not read or modify /Users/zouyongming/VoxSign or unrelated repositories. Read ${TASK_FILE} and execute only that task. Set Status to in_progress at start. Respect Allowed Files and Non-Goals. Run the listed Test / Eval command before completion. Set Status to done only when acceptance criteria are met. Write concrete results in the Output section."
 
     printf '\n[%s] Worker exited. Rechecking task status...\n' "$TID"
     sleep 2

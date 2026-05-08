@@ -51,6 +51,16 @@ AI contributors must work only in:
 /Users/zouyongming/projects/minerva-ai-kernel
 ```
 
+On Linux or another host, the equivalent repository root must be provided
+explicitly with:
+
+```bash
+export MINERVA_PROJECT_ROOT=/path/to/minerva-ai-kernel
+```
+
+The boundary remains strict: the AI worker may operate only inside the declared
+Minerva root.
+
 They must not touch:
 
 ```text
@@ -401,4 +411,3 @@ new issues -> PRs -> tests/evals -> reports -> next issues
 ```
 
 The founder should steer strategy, not manually push every task.
-

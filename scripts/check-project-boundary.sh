@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-EXPECTED_ROOT="/Users/zouyongming/projects/minerva-ai-kernel"
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+EXPECTED_ROOT="${MINERVA_PROJECT_ROOT:-/Users/zouyongming/projects/minerva-ai-kernel}"
 
 if [[ "$ROOT" != "$EXPECTED_ROOT" ]]; then
     printf 'ERROR: expected Minerva root %s, got %s\n' "$EXPECTED_ROOT" "$ROOT"
@@ -24,4 +24,3 @@ if [[ -d /Users/zouyongming/VoxSign/.tasks && -d .tasks ]]; then
 fi
 
 printf 'OK: project boundary verified for %s\n' "$ROOT"
-

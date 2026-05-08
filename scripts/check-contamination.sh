@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-EXPECTED_ROOT="/Users/zouyongming/projects/minerva-ai-kernel"
+EXPECTED_ROOT="${MINERVA_PROJECT_ROOT:-/Users/zouyongming/projects/minerva-ai-kernel}"
 
 if [[ "$ROOT" != "$EXPECTED_ROOT" ]]; then
     printf 'ERROR: expected Minerva root %s, got %s\n' "$EXPECTED_ROOT" "$ROOT"
@@ -36,4 +36,3 @@ if [[ "$fail" -ne 0 ]]; then
 fi
 
 printf 'OK: no VoxSign contamination found in Minerva runtime paths.\n'
-
