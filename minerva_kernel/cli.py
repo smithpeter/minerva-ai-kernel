@@ -6,6 +6,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from .observe import DEFAULT_TIMEOUT_SECONDS, observe_command, save_run_record
 from .planner import build_prompt
 from .policy import validate_action, validate_payload
 from .providers import ModelProvider
@@ -23,6 +24,12 @@ class Diagnosis:
 
 def diagnose_file(path: str | Path, provider: ModelProvider | None = None) -> Diagnosis:
     observation = _load_observation(path)
+    return diagnose_observation(observation, provider=provider)
+
+
+def diagnose_observation(
+    observation: Observation, provider: ModelProvider | None = None
+) -> Diagnosis:
     redacted_observation = observation.redacted()
     messages = build_prompt(redacted_observation)
     decision = LocalLLMRouter(provider=provider).propose(messages)
@@ -44,6 +51,13 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
     diagnose = subparsers.add_parser("diagnose", help="Diagnose a failure JSON file.")
     diagnose.add_argument("path")
     observe = subparsers.add_parser("observe", help="Observe a command failure.")
+    observe.add_argument(
+        "--timeout",
+        type=float,
+        default=DEFAULT_TIMEOUT_SECONDS,
+        metavar="SECONDS",
+        help="Maximum command runtime before Minerva records a timeout.",
+    )
     observe.add_argument("observed_command", nargs=argparse.REMAINDER)
     policy_check = subparsers.add_parser(
         "policy-check", help="Validate a decision JSON file against policy."
@@ -68,7 +82,25 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
         return
 
     if args.command == "observe":
-        raise SystemExit("observe is planned for M0 and not implemented yet")
+        try:
+            command = _normalize_observed_command(args.observed_command)
+            observation = observe_command(command, timeout_seconds=args.timeout)
+            diagnosis = diagnose_observation(observation, provider=provider)
+            run_record_path = save_run_record(
+                observation=observation,
+                decision=diagnosis.decision,
+                policy_decision=diagnosis.policy_decision,
+                redactions=diagnosis.redactions,
+            )
+        except (OSError, ValueError) as exc:
+            print(f"Observe failed: {exc}", file=sys.stderr)
+            raise SystemExit(1) from exc
+
+        _print_diagnosis(diagnosis)
+        print(f"Saved: {_display_path(run_record_path)}")
+        if not diagnosis.policy_decision.allowed:
+            raise SystemExit(2)
+        return
 
     if args.command == "policy-check":
         payload = json.loads(Path(args.path).read_text(encoding="utf-8"))
@@ -86,6 +118,15 @@ def _load_observation(path: str | Path) -> Observation:
     if not isinstance(payload, dict):
         raise ValueError("observation JSON must be an object")
     return Observation.from_dict(payload)
+
+
+def _normalize_observed_command(values: list[str]) -> list[str]:
+    command = list(values)
+    if command and command[0] == "--":
+        command = command[1:]
+    if not command:
+        raise ValueError("observe requires a command after --")
+    return command
 
 
 def _print_diagnosis(diagnosis: Diagnosis) -> None:
@@ -116,6 +157,13 @@ def _merge_optional_redactions(
         return None
     merged = merge_redaction_summaries(*present)
     return merged if merged.count else None
+
+
+def _display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(Path.cwd()))
+    except ValueError:
+        return str(path)
 
 
 if __name__ == "__main__":

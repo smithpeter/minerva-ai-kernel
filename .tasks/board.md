@@ -12,5 +12,5 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T4 | #6 | done | Security | Implement redaction v0 before model input |
 | T5 | #9 | done | Kernel | Add local model provider abstraction and mock provider |
 | T6 | #3 | done | Kernel | Implement `minerva diagnose failure.json` |
-| T7 | #4 | pending | Kernel | Implement `minerva observe -- <command>` |
+| T7 | #4 | done | Kernel | Implement `minerva observe -- <command>` |
 | T8 | #8 | pending | Eval | Implement eval smoke runner v0 |
