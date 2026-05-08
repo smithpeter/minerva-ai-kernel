@@ -36,3 +36,7 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T28 | #28 | done | Eval / Research | Add local model eval harness skeleton with mock provider |
 | T29 | #29 | done | Docs / Ecosystem | Add pack manifest examples and validation guidance |
 | T30 | #30 | done | Release | Draft release notes and public update for current milestone |
+| T31 | #31 | pending | Release | Record full local release dry-run evidence for current commit |
+| T32 | #32 | pending | Release / Integration | Automate GitHub Actions and domain readiness checks |
+| T33 | #33 | pending | Docs / Integration | Add practical integration recipes for CI, SDK, and agents |
+| T34 | #34 | pending | Eval / Research | Define local CPU model candidate registry and eval scoring contract |
