@@ -1,0 +1,106 @@
+{
+  "schema_version": "minerva.pack_manifest.v0",
+  "pack_type": "policy",
+  "id": "minerva.examples.policy.ci-read-only",
+  "name": "CI Read-Only Policy Example",
+  "version": "0.1.0",
+  "description": "Example policy pack that allows only low-risk diagnostic decisions for CI and blocks repair, write, credential, and network side effects.",
+  "license": "CC0-1.0",
+  "ownership": {
+    "owner": "Minerva example ecosystem",
+    "maintainers": [
+      {
+        "name": "Example Policy Maintainer",
+        "contact": "policy-maintainers@example.invalid",
+        "github": "example-policy-maintainer"
+      }
+    ],
+    "reviewers": [
+      "core-maintainers",
+      "security-reviewers"
+    ],
+    "support": "Example-only; replace with a real policy support channel before publishing."
+  },
+  "compatibility": {
+    "minerva": {
+      "min_version": "0.1.0",
+      "max_tested_version": "0.1.x"
+    },
+    "schemas": {
+      "pack_manifest": "minerva.pack_manifest.v0",
+      "decision": "decision.v0",
+      "policy_result": "policy_decision.v0"
+    },
+    "python": ">=3.10"
+  },
+  "safety": {
+    "redaction_required": true,
+    "policy_gated_decisions": true,
+    "no_auto_repair_by_default": true,
+    "cpu_local_minimum_path_preserved": true,
+    "remote_services_required": false,
+    "secrets_allowed": false,
+    "risk_notes": [
+      "The policy fails closed for unknown actions, invalid decisions, missing evidence, and any medium or high risk decision.",
+      "Write actions, package installs, deploys, credential access, and arbitrary shell execution require a separate reviewed executor path."
+    ]
+  },
+  "policy": {
+    "mode": "ci-read-only",
+    "default_decision": "deny",
+    "allow": [
+      {
+        "action": "inspect_dependencies",
+        "conditions": [
+          "risk == low",
+          "confidence >= 0.70",
+          "escalate == false",
+          "evidence is present"
+        ]
+      },
+      {
+        "action": "check_logs",
+        "conditions": [
+          "risk == low",
+          "bounded_log_tails_only == true",
+          "redaction_required == true"
+        ]
+      },
+      {
+        "action": "check_command_exists",
+        "conditions": [
+          "risk == low",
+          "command_arguments_are_not_executed == true"
+        ]
+      }
+    ],
+    "deny": [
+      {
+        "action": "run_command",
+        "reason": "Arbitrary shell execution is outside CI read-only mode."
+      },
+      {
+        "action": "write_file",
+        "reason": "Filesystem writes require a separate reviewed executor path."
+      },
+      {
+        "action": "ask_bigger_llm",
+        "reason": "Remote or larger-model escalation is not part of the minimum CI path."
+      }
+    ],
+    "human_approval_required": [
+      "filesystem_write",
+      "package_install",
+      "deployment",
+      "credential_access",
+      "outbound_network_call",
+      "destructive_command"
+    ],
+    "audit": {
+      "non_default_allowances": [
+        "check_logs may read only bounded, redacted log tails already present in the observation."
+      ],
+      "blocked_reason_required": true
+    }
+  }
+}

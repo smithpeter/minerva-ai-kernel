@@ -1,0 +1,90 @@
+{
+  "schema_version": "minerva.pack_manifest.v0",
+  "pack_type": "taxonomy",
+  "id": "minerva.examples.taxonomy.python-dependencies",
+  "name": "Python Dependency Taxonomy Example",
+  "version": "0.1.0",
+  "description": "Example taxonomy pack for classifying Python dependency failures and routing them to read-only diagnostic actions.",
+  "license": "CC0-1.0",
+  "ownership": {
+    "owner": "Minerva example ecosystem",
+    "maintainers": [
+      {
+        "name": "Example Pack Maintainer",
+        "contact": "maintainers@example.invalid",
+        "github": "example-maintainer"
+      }
+    ],
+    "reviewers": [
+      "core-maintainers"
+    ],
+    "support": "Example-only; replace with a real pack support channel before publishing."
+  },
+  "compatibility": {
+    "minerva": {
+      "min_version": "0.1.0",
+      "max_tested_version": "0.1.x"
+    },
+    "schemas": {
+      "pack_manifest": "minerva.pack_manifest.v0",
+      "observation": "observation.v0",
+      "decision": "decision.v0"
+    },
+    "python": ">=3.10"
+  },
+  "safety": {
+    "redaction_required": true,
+    "policy_gated_decisions": true,
+    "no_auto_repair_by_default": true,
+    "cpu_local_minimum_path_preserved": true,
+    "remote_services_required": false,
+    "secrets_allowed": false,
+    "risk_notes": [
+      "Labels describe failure shape only; they do not carry shell commands, package installs, or patch content.",
+      "Suggested actions stay diagnostic until a policy pack and executor path explicitly allow more."
+    ]
+  },
+  "taxonomy": {
+    "domain": "python",
+    "failure_labels": [
+      {
+        "id": "missing_python_dependency",
+        "definition": "A Python import fails because a required distribution is absent from the runtime environment.",
+        "signals": [
+          "ModuleNotFoundError",
+          "ImportError: No module named"
+        ],
+        "maps_to_core_failure": "missing_dependency"
+      },
+      {
+        "id": "python_package_metadata_missing",
+        "definition": "Dependency metadata or lockfile information is absent or inconsistent.",
+        "signals": [
+          "PackageNotFoundError",
+          "No matching distribution found"
+        ],
+        "maps_to_core_failure": "missing_dependency"
+      }
+    ],
+    "safe_action_labels": [
+      {
+        "action": "inspect_dependencies",
+        "description": "Inspect dependency manifests and lockfiles before retrying."
+      },
+      {
+        "action": "check_logs",
+        "description": "Read bounded, redacted install or test output tails."
+      }
+    ],
+    "negative_examples": [
+      {
+        "signal": "PermissionError while importing a local file",
+        "use_label": "permission_denied"
+      },
+      {
+        "signal": "SyntaxError in a package's Python source",
+        "use_label": "test_or_runtime_error"
+      }
+    ]
+  }
+}

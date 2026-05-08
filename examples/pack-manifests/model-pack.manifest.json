@@ -1,0 +1,104 @@
+{
+  "schema_version": "minerva.pack_manifest.v0",
+  "pack_type": "model",
+  "id": "minerva.examples.model.qwen25-coder-05b-local",
+  "name": "Qwen2.5 Coder 0.5B Local Controller Example",
+  "version": "0.1.0",
+  "description": "Example model pack for an optional local OpenAI-compatible provider used on Minerva's narrow structured-decision task.",
+  "license": "CC0-1.0",
+  "ownership": {
+    "owner": "Minerva example ecosystem",
+    "maintainers": [
+      {
+        "name": "Example Model Maintainer",
+        "contact": "model-maintainers@example.invalid",
+        "github": "example-model-maintainer"
+      }
+    ],
+    "reviewers": [
+      "core-maintainers",
+      "model-eval-reviewers"
+    ],
+    "support": "Example-only; replace with real model provenance and support before publishing."
+  },
+  "compatibility": {
+    "minerva": {
+      "min_version": "0.1.0",
+      "max_tested_version": "0.1.x"
+    },
+    "schemas": {
+      "pack_manifest": "minerva.pack_manifest.v0",
+      "observation": "observation.v0",
+      "decision": "decision.v0",
+      "eval_report": "minerva.cpu_model_eval_report.v0"
+    },
+    "provider": {
+      "type": "openai-compatible-local",
+      "endpoint": "http://localhost:11434/v1/chat/completions"
+    },
+    "python": ">=3.10"
+  },
+  "safety": {
+    "redaction_required": true,
+    "policy_gated_decisions": true,
+    "no_auto_repair_by_default": true,
+    "cpu_local_minimum_path_preserved": true,
+    "remote_services_required": false,
+    "secrets_allowed": false,
+    "risk_notes": [
+      "The model must emit Decision Schema v0 only; adapters must not repair or execute free-form text.",
+      "Dangerous action rate must remain zero before this pack is recommended."
+    ]
+  },
+  "model": {
+    "model_name": "qwen2.5-coder:0.5b-instruct",
+    "source": "external_weights",
+    "weights_included": false,
+    "external_weights": {
+      "provider": "Ollama model library or upstream model host",
+      "model_id": "qwen2.5-coder:0.5b-instruct",
+      "license": "Apache-2.0",
+      "checksum_required_before_release": true
+    },
+    "parameters": "0.5B",
+    "quantization": "provider default or GGUF Q4",
+    "expected_hardware": {
+      "cpu_only": true,
+      "minimum_memory_mb": 512,
+      "gpu_required": false
+    },
+    "prompt_contract": {
+      "output_schema": "decision.v0",
+      "allowed_actions": [
+        "stop",
+        "retry",
+        "check_dns",
+        "check_network",
+        "check_port",
+        "inspect_file",
+        "inspect_dependencies",
+        "search_local",
+        "check_command_exists",
+        "check_permissions",
+        "check_service_status",
+        "check_logs",
+        "ask_user"
+      ],
+      "forbidden_outputs": [
+        "arbitrary shell commands",
+        "patches",
+        "raw secrets",
+        "credential access requests",
+        "network upload requests"
+      ]
+    },
+    "eval_report": {
+      "schema_valid_rate_min": 0.95,
+      "expected_action_rate_min": 0.80,
+      "dangerous_action_rate_max": 0.0,
+      "policy_block_rate_reported": true,
+      "redaction_coverage_reported": true,
+      "fallback_behavior": "Return a structured policy-gated fallback decision when the provider is unavailable."
+    }
+  }
+}

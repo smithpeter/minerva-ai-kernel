@@ -1,0 +1,98 @@
+{
+  "schema_version": "minerva.pack_manifest.v0",
+  "pack_type": "adapter",
+  "id": "minerva.examples.adapter.github-actions",
+  "name": "GitHub Actions Adapter Example",
+  "version": "0.1.0",
+  "description": "Example adapter manifest for mapping GitHub Actions job failures into Minerva observations and policy-checked decisions.",
+  "license": "CC0-1.0",
+  "ownership": {
+    "owner": "Minerva example ecosystem",
+    "maintainers": [
+      {
+        "name": "Example Adapter Maintainer",
+        "contact": "adapter-maintainers@example.invalid",
+        "github": "example-adapter-maintainer"
+      }
+    ],
+    "reviewers": [
+      "core-maintainers",
+      "adapter-reviewers"
+    ],
+    "support": "Example-only; replace with a real adapter support channel before publishing."
+  },
+  "compatibility": {
+    "minerva": {
+      "min_version": "0.1.0",
+      "max_tested_version": "0.1.x"
+    },
+    "schemas": {
+      "pack_manifest": "minerva.pack_manifest.v0",
+      "observation": "observation.v0",
+      "decision": "decision.v0",
+      "ci_artifact": "minerva.ci_artifact.v0"
+    },
+    "target_system": {
+      "name": "GitHub Actions",
+      "supported_versions": [
+        "workflow command files v1",
+        "job summaries v1"
+      ]
+    },
+    "python": ">=3.10"
+  },
+  "safety": {
+    "redaction_required": true,
+    "policy_gated_decisions": true,
+    "no_auto_repair_by_default": true,
+    "cpu_local_minimum_path_preserved": true,
+    "remote_services_required": false,
+    "secrets_allowed": false,
+    "risk_notes": [
+      "The adapter reports diagnostics and policy status but does not change the observed job outcome.",
+      "Raw logs, environment dumps, tokens, and private repository state must be redacted or omitted before model input and artifacts."
+    ]
+  },
+  "adapter": {
+    "target_system": "GitHub Actions",
+    "dependencies": [
+      {
+        "name": "minerva",
+        "version": ">=0.1.0",
+        "optional": false
+      }
+    ],
+    "observation_mapping": {
+      "command": "failed step command or stable step label",
+      "cwd": "runner workspace path after redaction",
+      "exit_code": "failed step exit code when available",
+      "stdout_tail": "bounded redacted stdout tail",
+      "stderr_tail": "bounded redacted stderr tail",
+      "source": "github_actions",
+      "policy_summary": "CI observed command remains the gate; Minerva action is advisory."
+    },
+    "redaction_boundary": [
+      "before Observation is sent to a model provider",
+      "before run records or CI artifacts are persisted",
+      "before summaries are uploaded to job output"
+    ],
+    "decision_consumption": {
+      "requires_policy_decision_allowed": true,
+      "auto_execute_minerva_action": false,
+      "preserve_host_status": true,
+      "show_block_reason": true
+    },
+    "failure_behavior": [
+      "If Minerva is unavailable, keep the original CI failure and emit an adapter error summary.",
+      "If the local model is unavailable, use the structured fallback decision and policy gate it.",
+      "If decision validation fails, block the action and keep the validation reason.",
+      "If policy blocks the decision, publish the block reason without executing the action."
+    ],
+    "tests_expected": [
+      "success path with policy-allowed diagnostic decision",
+      "policy-blocked path",
+      "redaction path",
+      "unavailable Minerva runtime path"
+    ]
+  }
+}

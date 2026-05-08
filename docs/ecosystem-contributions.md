@@ -39,6 +39,28 @@ stay installable and removable without changing the minimum runtime. Community
 packs can extend knowledge and defaults, but they do not own the authorization
 boundary; policy and executor behavior remain explicit core contracts.
 
+## Manifest Examples and Validation
+
+Machine-readable examples live in
+[examples/pack-manifests](../examples/pack-manifests/README.md):
+
+- Taxonomy pack: `taxonomy-pack.manifest.json`
+- Policy pack: `policy-pack.manifest.json`
+- Model pack: `model-pack.manifest.json`
+- Adapter pack: `adapter-pack.manifest.json`
+
+Each example includes required identity fields, safety fields, ownership fields,
+compatibility fields, and one type-specific object named after the pack type.
+Validate the examples with:
+
+```bash
+python3 -m unittest tests.test_pack_manifest_examples
+```
+
+Real packs should add pack-specific validation for duplicate IDs, schema names,
+supported action labels, policy allow/deny behavior, eval fixtures, redaction
+coverage, and blocked unsafe paths before publication.
+
 ## Taxonomy Packs
 
 Taxonomy packs teach Minerva about failure domains such as Python, Node, Docker,
@@ -180,6 +202,9 @@ Before submitting a pack or adapter, confirm:
   adapter.
 - The manifest or README states ownership, version, license, compatibility, and
   operating assumptions.
+- The manifest follows the example shape in
+  [examples/pack-manifests](../examples/pack-manifests/README.md) or explains
+  any intentional difference.
 - Examples are compact and redacted.
 - Tests or eval fixtures cover the expected positive path and at least one
   blocked or unsafe path.

@@ -34,5 +34,5 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T26 | #26 | done | Docs / Ecosystem | Add ecosystem contribution docs for packs and adapters |
 | T27 | #27 | done | Eval | Implement deterministic eval report command |
 | T28 | #28 | done | Eval / Research | Add local model eval harness skeleton with mock provider |
-| T29 | #29 | pending | Docs / Ecosystem | Add pack manifest examples and validation guidance |
+| T29 | #29 | done | Docs / Ecosystem | Add pack manifest examples and validation guidance |
 | T30 | #30 | pending | Release | Draft release notes and public update for current milestone |
