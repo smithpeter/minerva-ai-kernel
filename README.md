@@ -96,6 +96,10 @@ For bounded automation, run one task tick:
 bash scripts/ai-team-tick.sh
 ```
 
+The tick includes an autopilot finalizer. When a worker marks a task card
+`done`, the finalizer runs boundary checks, contamination checks, compile/tests,
+commits, pushes, and tries to update the linked GitHub issue.
+
 To install a macOS `launchd` job that runs one tick every 30 minutes:
 
 ```bash

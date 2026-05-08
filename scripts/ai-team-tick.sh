@@ -23,6 +23,8 @@ if ! mkdir "$LOCK_DIR" 2>/dev/null; then
 fi
 trap 'rmdir "$LOCK_DIR"' EXIT
 
+bash scripts/ai-team-autopilot.sh
+
 if ! command -v codex >/dev/null 2>&1 && ! command -v claude >/dev/null 2>&1; then
     printf 'Minerva AI team tick skipped: no supported AI executor found.\n'
     exit 0
@@ -50,6 +52,8 @@ set +e
 bash scripts/agent-loop.sh "$TASK_ID" 2>&1 | tee -a "$LOG_FILE"
 status="${PIPESTATUS[0]}"
 set -e
+
+bash scripts/ai-team-autopilot.sh 2>&1 | tee -a "$LOG_FILE"
 
 printf '\nMinerva AI team tick finished with status %s\n' "$status" | tee -a "$LOG_FILE"
 exit "$status"
