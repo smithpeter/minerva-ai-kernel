@@ -4,6 +4,12 @@ Minerva is a CPU-local failure interpreter for CI/CD, agents, and ops.
 
 It keeps a minimum local reasoning path available when models, tools, networks, code, configuration, or execution environments fail.
 
+Project domain:
+
+```text
+minervakernel.com
+```
+
 ## Positioning
 
 ```text

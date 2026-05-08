@@ -36,6 +36,12 @@ Practical product positioning:
 Minerva: CPU-local failure interpreter for CI/CD, agents, and ops.
 ```
 
+Public project domain:
+
+```text
+minervakernel.com
+```
+
 Chinese:
 
 ```text
@@ -841,4 +847,3 @@ Minerva starts by explaining failed commands and CI jobs locally,
 then becomes the CPU-only reliability layer that lets AI systems diagnose,
 recover, and escalate when models, tools, networks, and runtime environments fail.
 ```
-

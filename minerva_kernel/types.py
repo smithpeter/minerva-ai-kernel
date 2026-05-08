@@ -4,15 +4,43 @@ from dataclasses import dataclass, field
 from typing import Any, Literal
 
 
-ActionName = Literal[
+InstructionName = Literal[
     "stop",
     "retry",
-    "run_command",
+    "check_dns",
+    "check_network",
+    "check_port",
     "inspect_file",
+    "inspect_dependencies",
     "search_local",
+    "check_command_exists",
+    "check_permissions",
+    "check_service_status",
+    "check_logs",
     "ask_bigger_llm",
     "ask_user",
 ]
+
+RiskLevel = Literal["low", "medium", "high"]
+
+INSTRUCTION_SET_V0: tuple[InstructionName, ...] = (
+    "stop",
+    "retry",
+    "check_dns",
+    "check_network",
+    "check_port",
+    "inspect_file",
+    "inspect_dependencies",
+    "search_local",
+    "check_command_exists",
+    "check_permissions",
+    "check_service_status",
+    "check_logs",
+    "ask_bigger_llm",
+    "ask_user",
+)
+
+RISK_LEVELS: tuple[RiskLevel, ...] = ("low", "medium", "high")
 
 
 @dataclass(frozen=True)
@@ -72,15 +100,73 @@ class Observation:
 
 
 @dataclass(frozen=True)
-class ProposedAction:
-    diagnosis: str
+class Decision:
+    """Stable Decision Schema v0 returned by Minerva's interpreter."""
+
+    failure: str
+    action: InstructionName
     confidence: float
-    next_action: ActionName
-    tool: str | None
-    args: list[str]
-    risk: Literal["low", "medium", "high"]
+    risk: RiskLevel
     escalate: bool
-    reason: str
+    evidence: list[str] = field(default_factory=list)
+    reason: str | None = None
+
+    def __post_init__(self) -> None:
+        if not self.failure:
+            raise ValueError("failure is required")
+        if self.action not in INSTRUCTION_SET_V0:
+            raise ValueError(f"unsupported action: {self.action}")
+        if not 0.0 <= self.confidence <= 1.0:
+            raise ValueError("confidence must be between 0.0 and 1.0")
+        if self.risk not in RISK_LEVELS:
+            raise ValueError(f"unsupported risk: {self.risk}")
+        if not isinstance(self.escalate, bool):
+            raise ValueError("escalate must be a boolean")
+        if not self.evidence:
+            raise ValueError("evidence is required")
+        if any(not item for item in self.evidence):
+            raise ValueError("evidence items must be non-empty")
+
+    def to_dict(self) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "schema_version": "decision.v0",
+            "failure": self.failure,
+            "action": self.action,
+            "confidence": self.confidence,
+            "risk": self.risk,
+            "escalate": self.escalate,
+            "evidence": list(self.evidence),
+        }
+        if self.reason:
+            payload["reason"] = self.reason
+        return payload
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any]) -> "Decision":
+        action = payload.get("action")
+        risk = payload.get("risk")
+        if action not in INSTRUCTION_SET_V0:
+            raise ValueError(f"unsupported action: {action}")
+        if risk not in RISK_LEVELS:
+            raise ValueError(f"unsupported risk: {risk}")
+        escalate = payload.get("escalate", True)
+        if not isinstance(escalate, bool):
+            raise ValueError("escalate must be a boolean")
+        evidence = payload.get("evidence", [])
+        if isinstance(evidence, str) or not isinstance(evidence, list):
+            raise ValueError("evidence must be a list")
+        return cls(
+            failure=str(payload.get("failure", "")),
+            action=action,
+            confidence=float(payload.get("confidence", 0.0)),
+            risk=risk,
+            escalate=escalate,
+            evidence=[str(item) for item in evidence],
+            reason=payload.get("reason"),
+        )
+
+
+ProposedAction = Decision
 
 
 @dataclass(frozen=True)

@@ -8,7 +8,7 @@
 3. Ask LLM
 4. Parse JSON
 5. Validate policy
-6. Execute
+6. Dispatch bounded instruction
 7. Record outcome
 8. Repeat or stop
 ```
@@ -28,31 +28,37 @@ Minimum observation object:
 }
 ```
 
-## Action Schema
+## Decision Schema
 
 The LLM must return JSON:
 
 ```json
 {
-  "diagnosis": "dns_failure",
+  "failure": "dns_failure",
+  "action": "check_dns",
   "confidence": 0.86,
-  "next_action": "run_command",
-  "tool": "dig",
-  "args": ["+short", "example.com"],
   "risk": "low",
   "escalate": false,
+  "evidence": ["stderr contains 'Could not resolve host'"],
   "reason": "The command failed before connecting, so DNS should be checked first."
 }
 ```
 
-## Allowed Actions
+## Instruction Set v0
 
 ```text
 stop
 retry
-run_command
+check_dns
+check_network
+check_port
 inspect_file
+inspect_dependencies
 search_local
+check_command_exists
+check_permissions
+check_service_status
+check_logs
 ask_bigger_llm
 ask_user
 ```
@@ -61,11 +67,11 @@ ask_user
 
 Reject:
 
-- destructive commands
+- arbitrary shell command generation
 - credential access
 - filesystem writes outside allowed roots
 - network access when disabled
-- low-confidence command execution
+- low-confidence decisions
 
 Escalate:
 

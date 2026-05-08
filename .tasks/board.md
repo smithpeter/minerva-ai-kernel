@@ -7,6 +7,6 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | ID | GitHub | Status | Owner Lane | Title |
 |---|---|---|---|---|
 | T1 | #1 | done | Kernel | Define Observation Schema v0 |
-| T2 | #2 | pending | Kernel | Define Decision Schema and Instruction Set v0 |
+| T2 | #2 | done | Kernel | Define Decision Schema and Instruction Set v0 |
 | T3 | #5 | pending | Security | Implement Policy Runtime v0 and dangerous action tests |
 | T4 | #6 | pending | Security | Implement redaction v0 before model input |

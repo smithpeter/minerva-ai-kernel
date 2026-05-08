@@ -4,7 +4,7 @@ import json
 import urllib.error
 import urllib.request
 
-from .types import ProposedAction
+from .types import Decision
 
 
 class LocalLLMRouter:
@@ -18,7 +18,7 @@ class LocalLLMRouter:
         self.model = model
         self.timeout = timeout
 
-    def propose(self, messages: list[dict[str, str]]) -> ProposedAction:
+    def propose(self, messages: list[dict[str, str]]) -> Decision:
         body = {
             "model": self.model,
             "messages": messages,
@@ -38,26 +38,16 @@ class LocalLLMRouter:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
                 payload = json.loads(response.read().decode("utf-8"))
         except (urllib.error.URLError, TimeoutError) as exc:
-            return ProposedAction(
-                diagnosis="local_llm_unavailable",
+            return Decision(
                 confidence=1.0,
-                next_action="ask_bigger_llm",
-                tool=None,
-                args=[],
+                failure="local_llm_unavailable",
+                action="ask_bigger_llm",
                 risk="low",
                 escalate=True,
+                evidence=["local LLM request failed"],
                 reason=str(exc),
             )
 
         content = payload["choices"][0]["message"]["content"]
         parsed = json.loads(content)
-        return ProposedAction(
-            diagnosis=parsed.get("diagnosis", "unknown"),
-            confidence=float(parsed.get("confidence", 0.0)),
-            next_action=parsed.get("next_action", "ask_bigger_llm"),
-            tool=parsed.get("tool"),
-            args=list(parsed.get("args", [])),
-            risk=parsed.get("risk", "medium"),
-            escalate=bool(parsed.get("escalate", True)),
-            reason=parsed.get("reason", ""),
-        )
+        return Decision.from_dict(parsed)
