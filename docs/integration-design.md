@@ -94,6 +94,11 @@ Outputs:
 - PR comment
 - failure label
 
+The next credential-free GitHub Actions surface is documented in
+[CI Integration Surface](ci-integration-surface.md). It defines a
+`minerva observe --` wrapper pattern, a concise `$GITHUB_STEP_SUMMARY` markdown
+format, and a redacted `minerva_ci_run.v0` JSON artifact shape.
+
 ### Level 3: SDK For Agents
 
 Agent tool-call guard:
@@ -319,10 +324,14 @@ Example markdown:
 
 ```text
 Minerva diagnosis: missing_dependency
-Suggested next action: inspect pyproject.toml and lockfile
+Diagnostic action: inspect pyproject.toml and lockfile
 Risk: low
 Escalation: not required
+Policy: allowed by read-only policy
 ```
+
+The CI output contract should remain diagnostic only: no auto-repair, redaction
+before model input, and policy-gated decisions.
 
 ## Agent Framework UX
 
@@ -375,4 +384,3 @@ paste/file -> command wrapper -> CI wrapper -> SDK -> daemon -> platform
 ```
 
 Each step should provide value independently.
-

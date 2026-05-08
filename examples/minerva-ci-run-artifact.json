@@ -1,0 +1,97 @@
+{
+  "schema_version": "minerva_ci_run.v0",
+  "created_at": "2026-05-08T12:00:00Z",
+  "ci": {
+    "provider": "github_actions",
+    "workflow": "ci",
+    "job": "test",
+    "run_id": "1234567890",
+    "attempt": 1,
+    "event_name": "pull_request",
+    "ref": "refs/pull/16/merge",
+    "sha": "abc123def4567890abc123def4567890abc123de"
+  },
+  "summary": {
+    "status": "failed_policy_allowed",
+    "observed_exit_code": 1,
+    "failure": "missing_dependency",
+    "action": "inspect_dependencies",
+    "confidence": 0.82,
+    "risk": "low",
+    "escalate": false,
+    "policy_allowed": true,
+    "policy_reason": "allowed by read-only policy",
+    "redaction_count": 1,
+    "redaction_types": [
+      "bearer_token"
+    ]
+  },
+  "run_record": {
+    "schema_version": "run.v0",
+    "created_at": "2026-05-08T12:00:00Z",
+    "observation": {
+      "schema_version": "observation.v0",
+      "command": "python3 -m unittest discover -s tests",
+      "cwd": "/workspace/minerva-ai-kernel",
+      "exit_code": 1,
+      "stdout_tail": "Using Authorization: Bearer [REDACTED:bearer_token]\n",
+      "stderr_tail": "ModuleNotFoundError: No module named 'minerva_kernel'",
+      "duration_ms": 931,
+      "source": "local_shell",
+      "policy_summary": "command attempted with 20s timeout; stdout/stderr tails limited to 12000 chars",
+      "runtime": {
+        "python": "3.14.0",
+        "platform": "linux",
+        "platform_release": "6.8.0",
+        "machine": "x86_64",
+        "network_status": "unknown",
+        "timeout_seconds": 20.0,
+        "tail_chars": 12000,
+        "stdout_truncated": false,
+        "stderr_truncated": false,
+        "timed_out": false,
+        "command_found": true
+      },
+      "redactions": {
+        "count": 1,
+        "types": [
+          "bearer_token"
+        ]
+      }
+    },
+    "decision": {
+      "schema_version": "decision.v0",
+      "failure": "missing_dependency",
+      "action": "inspect_dependencies",
+      "confidence": 0.82,
+      "risk": "low",
+      "escalate": false,
+      "evidence": [
+        "stderr contains ModuleNotFoundError"
+      ],
+      "reason": "Tests imported a module that was not available in the current environment."
+    },
+    "policy_decision": {
+      "allowed": true,
+      "reason": "allowed by read-only policy"
+    },
+    "redactions": {
+      "count": 1,
+      "types": [
+        "bearer_token"
+      ]
+    }
+  },
+  "safety": {
+    "auto_repair": false,
+    "model_input_redacted": true,
+    "artifact_redacted": true,
+    "policy_gated": true,
+    "github_api_credentials_required": false,
+    "notes": [
+      "The diagnostic action is not executed automatically.",
+      "Only bounded stdout and stderr tails are persisted.",
+      "Consumers should rely on policy_allowed before using the decision."
+    ]
+  }
+}
