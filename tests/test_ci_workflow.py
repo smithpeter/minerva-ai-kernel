@@ -11,6 +11,8 @@ class CiSmokeWorkflowTests(unittest.TestCase):
             encoding="utf-8"
         )
 
+        self.assertIn('python-version: "3.11"', workflow)
+        self.assertNotIn('python-version: "3.x"', workflow)
         self.assertIn("minerva observe -- bash -c", workflow)
         self.assertIn(
             "python3 -m compileall minerva_kernel && "

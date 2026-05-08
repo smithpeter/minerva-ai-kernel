@@ -40,7 +40,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: "3.11"
 
       - name: Install Minerva
         run: python3 -m pip install --no-deps .

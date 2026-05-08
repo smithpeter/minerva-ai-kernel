@@ -81,6 +81,9 @@ save local evidence for review and evaluation.
 - Fixed package metadata so editable install exposes the documented `minerva`
   console command, uses SPDX license metadata, and limits setuptools package
   discovery to `minerva_kernel`.
+- Pinned the GitHub Actions CI smoke gate to Python 3.11, matching the
+  known-good fresh-virtualenv release evidence instead of floating to unstable
+  `3.x` runners.
 - Recorded post-metadata-fix full local release dry-run evidence for commit
   `87dd7730a07f29c1b82de2ed937ad35c94db6e04`, including offline editable
   install, `minerva doctor` through the installed console command, `observe`,

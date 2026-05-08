@@ -108,7 +108,7 @@ This repository is being initialized from the Minerva research workspace. The fi
 ## CI Gate
 
 Every push and pull request runs the GitHub Actions CI smoke gate through
-Minerva:
+Minerva on Python 3.11:
 
 ```bash
 minerva observe -- bash -c 'python3 -m compileall minerva_kernel && python3 -m unittest discover -s tests && python3 -m minerva_kernel.eval_smoke'
