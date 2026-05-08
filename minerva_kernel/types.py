@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+from .redaction import RedactionSummary, merge_redaction_summaries, redact_value
+
 
 InstructionName = Literal[
     "stop",
@@ -56,6 +58,7 @@ class Observation:
     source: str
     policy_summary: str
     runtime: dict[str, Any] = field(default_factory=dict)
+    redactions: RedactionSummary | None = None
 
     def __post_init__(self) -> None:
         if self.duration_ms < 0:
@@ -83,6 +86,9 @@ class Observation:
         return str(value)
 
     def to_dict(self) -> dict[str, Any]:
+        return self.redacted()._to_dict()
+
+    def _to_dict(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
             "schema_version": "observation.v0",
             "command": self.command,
@@ -96,7 +102,40 @@ class Observation:
         }
         if self.runtime:
             payload["runtime"] = dict(self.runtime)
+        if self.redactions and self.redactions.count:
+            payload["redactions"] = self.redactions.to_dict()
         return payload
+
+    def redacted(self) -> "Observation":
+        fields = {
+            "command": self.command,
+            "cwd": self.cwd,
+            "stdout_tail": self.stdout_tail,
+            "stderr_tail": self.stderr_tail,
+            "source": self.source,
+            "policy_summary": self.policy_summary,
+            "runtime": self.runtime,
+        }
+        redacted_fields: dict[str, Any] = {}
+        summaries: list[RedactionSummary] = []
+        for key, value in fields.items():
+            result = redact_value(value)
+            redacted_fields[key] = result.value
+            summaries.append(result.summary)
+        existing = [self.redactions] if self.redactions else []
+        summary = merge_redaction_summaries(*(summaries + existing))
+        return Observation(
+            command=redacted_fields["command"],
+            cwd=redacted_fields["cwd"],
+            exit_code=self.exit_code,
+            stdout_tail=redacted_fields["stdout_tail"],
+            stderr_tail=redacted_fields["stderr_tail"],
+            duration_ms=self.duration_ms,
+            source=redacted_fields["source"],
+            policy_summary=redacted_fields["policy_summary"],
+            runtime=redacted_fields["runtime"],
+            redactions=summary if summary.count else None,
+        )
 
 
 @dataclass(frozen=True)
@@ -110,6 +149,7 @@ class Decision:
     escalate: bool
     evidence: list[str] = field(default_factory=list)
     reason: str | None = None
+    redactions: RedactionSummary | None = None
 
     def __post_init__(self) -> None:
         if not self.failure:
@@ -128,6 +168,9 @@ class Decision:
             raise ValueError("evidence items must be non-empty")
 
     def to_dict(self) -> dict[str, Any]:
+        return self.redacted()._to_dict()
+
+    def _to_dict(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
             "schema_version": "decision.v0",
             "failure": self.failure,
@@ -139,7 +182,34 @@ class Decision:
         }
         if self.reason:
             payload["reason"] = self.reason
+        if self.redactions and self.redactions.count:
+            payload["redactions"] = self.redactions.to_dict()
         return payload
+
+    def redacted(self) -> "Decision":
+        fields = {
+            "failure": self.failure,
+            "evidence": self.evidence,
+            "reason": self.reason,
+        }
+        redacted_fields: dict[str, Any] = {}
+        summaries: list[RedactionSummary] = []
+        for key, value in fields.items():
+            result = redact_value(value)
+            redacted_fields[key] = result.value
+            summaries.append(result.summary)
+        existing = [self.redactions] if self.redactions else []
+        summary = merge_redaction_summaries(*(summaries + existing))
+        return Decision(
+            failure=redacted_fields["failure"],
+            action=self.action,
+            confidence=self.confidence,
+            risk=self.risk,
+            escalate=self.escalate,
+            evidence=redacted_fields["evidence"],
+            reason=redacted_fields["reason"],
+            redactions=summary if summary.count else None,
+        )
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "Decision":
@@ -155,6 +225,7 @@ class Decision:
         evidence = payload.get("evidence", [])
         if isinstance(evidence, str) or not isinstance(evidence, list):
             raise ValueError("evidence must be a list")
+        redactions = _redaction_summary_from_dict(payload.get("redactions"))
         return cls(
             failure=str(payload.get("failure", "")),
             action=action,
@@ -163,6 +234,7 @@ class Decision:
             escalate=escalate,
             evidence=[str(item) for item in evidence],
             reason=payload.get("reason"),
+            redactions=redactions,
         )
 
 
@@ -173,3 +245,14 @@ ProposedAction = Decision
 class PolicyDecision:
     allowed: bool
     reason: str
+
+
+def _redaction_summary_from_dict(value: Any) -> RedactionSummary | None:
+    if not isinstance(value, dict):
+        return None
+    count = int(value.get("count", 0))
+    types = value.get("types", [])
+    if isinstance(types, str) or not isinstance(types, list):
+        return None
+    summary = RedactionSummary(count=count, types=tuple(str(item) for item in types))
+    return summary if summary.count else None

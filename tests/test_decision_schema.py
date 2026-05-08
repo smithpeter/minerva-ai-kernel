@@ -45,6 +45,24 @@ class DecisionSchemaTests(unittest.TestCase):
             "Need user confirmation before checking external network.",
         )
 
+    def test_decision_redacted_record_includes_summary(self) -> None:
+        decision = Decision(
+            failure="auth failed",
+            action="ask_user",
+            confidence=0.5,
+            risk="medium",
+            escalate=True,
+            evidence=["Authorization: Bearer abcdefghijklmnopqrstuvwxyz123456"],
+            reason="password=super-secret-value",
+        ).redacted()
+
+        payload = decision.to_dict()
+
+        self.assertNotIn("abcdefghijklmnopqrstuvwxyz123456", str(payload))
+        self.assertNotIn("super-secret-value", str(payload))
+        self.assertEqual(payload["redactions"]["count"], 2)
+        self.assertEqual(payload["redactions"]["types"], ["bearer_token", "password"])
+
     def test_instruction_set_v0_accepts_all_labels(self) -> None:
         expected = {
             "stop",

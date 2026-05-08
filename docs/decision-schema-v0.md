@@ -16,7 +16,11 @@ steps.
   "risk": "low",
   "escalate": false,
   "evidence": ["stderr contains ModuleNotFoundError"],
-  "reason": "Dependency metadata should be inspected before retrying."
+  "reason": "Dependency metadata should be inspected before retrying.",
+  "redactions": {
+    "count": 1,
+    "types": ["password"]
+  }
 }
 ```
 
@@ -32,6 +36,11 @@ steps.
 | `escalate` | yes | boolean | `true` when a larger LLM or user should handle the next step. |
 | `evidence` | yes | array of strings | Non-empty observations supporting the decision. |
 | `reason` | no | string | Optional short explanation for routing or audit logs. |
+| `redactions` | no | object | Present when redaction changed decision text before record serialization. Contains `count` and unique `types`. |
+
+Decision text is still redacted before serialization even though model input is
+redacted first. This catches provider echoes or adapter-generated reason text
+before a decision or run record is saved.
 
 ## Instruction Set v0
 

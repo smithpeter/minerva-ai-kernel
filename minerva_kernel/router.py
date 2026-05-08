@@ -50,4 +50,4 @@ class LocalLLMRouter:
 
         content = payload["choices"][0]["message"]["content"]
         parsed = json.loads(content)
-        return Decision.from_dict(parsed)
+        return Decision.from_dict(parsed).redacted()

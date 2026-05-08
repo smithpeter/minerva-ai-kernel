@@ -18,18 +18,7 @@ Escalate when confidence is low, risk is medium/high, or the situation is ambigu
 
 
 def build_prompt(observation: Observation) -> list[dict[str, str]]:
-    payload = {
-        "schema_version": "observation.v0",
-        "command": observation.command,
-        "cwd": observation.cwd,
-        "exit_code": observation.exit_code,
-        "stdout_tail": observation.stdout_tail,
-        "stderr_tail": observation.stderr_tail,
-        "duration_ms": observation.duration_ms,
-        "source": observation.source,
-        "policy_summary": observation.policy_summary,
-        "runtime": observation.runtime,
-    }
+    payload = observation.to_dict()
     return [
         {"role": "system", "content": SYSTEM_PROMPT},
         {

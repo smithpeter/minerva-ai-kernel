@@ -78,6 +78,24 @@ class ObservationSchemaTests(unittest.TestCase):
                 policy_summary="validated before execution",
             )
 
+    def test_observation_to_dict_redacts_saved_record(self) -> None:
+        observation = Observation(
+            command="curl -H 'Authorization: Bearer abcdefghijklmnopqrstuvwxyz123456'",
+            cwd="/workspace/minerva-ai-kernel",
+            exit_code=1,
+            stdout_tail="",
+            stderr_tail="",
+            duration_ms=120,
+            source="local_shell",
+            policy_summary="validated before execution",
+        )
+
+        payload = observation.to_dict()
+
+        self.assertNotIn("abcdefghijklmnopqrstuvwxyz123456", str(payload))
+        self.assertEqual(payload["redactions"]["count"], 1)
+        self.assertEqual(payload["redactions"]["types"], ["bearer_token"])
+
 
 if __name__ == "__main__":
     unittest.main()

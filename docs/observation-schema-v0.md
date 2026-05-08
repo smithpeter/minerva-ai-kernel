@@ -21,6 +21,10 @@ without storing full logs or adding inference-specific fields.
     "python": "3.14.0",
     "platform": "darwin",
     "network_status": "unknown"
+  },
+  "redactions": {
+    "count": 2,
+    "types": ["bearer_token", "password"]
   }
 }
 ```
@@ -39,6 +43,37 @@ without storing full logs or adding inference-specific fields.
 | `source` | yes | string | Producer identifier such as `local_shell`, `kernel`, `manual`, or an adapter name. |
 | `policy_summary` | yes | string | Short policy/runtime safety summary attached before interpretation. |
 | `runtime` | no | object | Optional metadata about interpreter, OS, package manager, network, CI job, or adapter context. |
+| `redactions` | no | object | Present when redaction changed the observation before model input or record serialization. Contains `count` and unique `types`. |
+
+## Default Collection
+
+Observation Schema v0 is designed for compact runtime evidence, not bulk data
+capture. By default Minerva records the command or tool label, working
+directory, exit code, bounded stdout and stderr tails, duration, source, policy
+summary, and optional non-secret runtime metadata such as interpreter version,
+platform, package manager, CI provider, or network status.
+
+Minerva does not collect full logs, full environment variables, `.env` files,
+credential files, browser cookies, SSH keys, private keys, tokens, passwords,
+cloud credentials, or secret values by default. If an adapter includes optional
+logs or metadata, those strings must be redacted before model input and before
+the saved observation or run record is written.
+
+## Redaction Metadata
+
+The v0 redactor targets obvious bearer tokens, API key patterns, passwords,
+private key blocks, GitHub tokens, and cloud credential-like strings. It is a
+basic safety layer, not a full DLP system. When it redacts content, the
+serialized observation includes a summary:
+
+```json
+{
+  "redactions": {
+    "count": 3,
+    "types": ["bearer_token", "api_key", "password"]
+  }
+}
+```
 
 ## Minimal Example
 
