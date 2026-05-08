@@ -75,6 +75,10 @@ Start here:
 
 This repository is being initialized from the Minerva research workspace. The first implementation target is `minerva observe -- <command>`.
 
+## CI Gate
+
+Every push and pull request runs the GitHub Actions CI smoke gate. It compiles `minerva_kernel`, runs the unit test suite, and executes `python -m minerva_kernel.eval_smoke`.
+
 ## Local AI Team
 
 Minerva has a local task board in `.tasks/` and a scoped agent loop:

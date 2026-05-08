@@ -1,0 +1,28 @@
+name: CI Smoke
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke:
+    name: Python smoke checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Compile package
+        run: python -m compileall minerva_kernel
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests
+
+      - name: Run evaluation smoke test
+        run: python -m minerva_kernel.eval_smoke
