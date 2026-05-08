@@ -40,3 +40,4 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T32 | #32 | done | Release / Integration | Automate GitHub Actions and domain readiness checks |
 | T33 | #33 | done | Docs / Integration | Add practical integration recipes for CI, SDK, and agents |
 | T34 | #34 | done | Eval / Research | Define local CPU model candidate registry and eval scoring contract |
+| T35 | #35 | pending | Release / Integration | Fix package metadata so editable install exposes minerva CLI |
