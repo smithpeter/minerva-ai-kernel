@@ -32,3 +32,7 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T24 | #24 | done | Kernel / Research | Add local model provider path and CPU model eval plan |
 | T25 | #25 | done | Eval | Grow failure corpus and publish M1 eval metrics |
 | T26 | #26 | done | Docs / Ecosystem | Add ecosystem contribution docs for packs and adapters |
+| T27 | #27 | pending | Eval | Implement deterministic eval report command |
+| T28 | #28 | pending | Eval / Research | Add local model eval harness skeleton with mock provider |
+| T29 | #29 | pending | Docs / Ecosystem | Add pack manifest examples and validation guidance |
+| T30 | #30 | pending | Release | Draft release notes and public update for current milestone |
