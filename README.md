@@ -70,6 +70,7 @@ Start here:
 - [Most important next step](docs/most-important-next-step.md)
 - [GitHub issues](docs/github-issues.md)
 - [Shared tools, isolated state](docs/shared-tools-isolated-state.md)
+- [Failure case contribution guide](docs/failure-case-contributions.md)
 
 ## Repository Status
 
