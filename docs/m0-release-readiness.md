@@ -23,8 +23,8 @@ the failure state, policy-checks a bounded decision, and saves a local run recor
 | Security Boundaries | Default policy is read-only and fails closed on write tools, shell tools, destructive commands, credential access, unknown action labels, low confidence, higher risk, and escalation requests. | Documented as the M0 safety boundary. Must remain covered by tests. | [M0 launch draft](m0-launch-blog-post.md) and [Decision Schema v0](decision-schema-v0.md). |
 | Redaction | Known sensitive values are redacted before model input and before saved observations, decisions, or run records are written. | Documented and represented in demo/eval expectations. Must remain covered by tests. | [Observation Schema v0](observation-schema-v0.md), [Decision Schema v0](decision-schema-v0.md), and [Failure case guide](failure-case-contributions.md). |
 | CI | GitHub Actions compile/test/eval smoke gate is green on the release branch or announcement commit. | Not verified by this local document. | README CI gate; remote CI must be checked before go. |
-| Docs | README, launch draft, demo script, schemas, contribution guide, and release readiness doc are linked and internally consistent. | Linked from README, launch draft, demo script, and examples index. | README project docs and this file. |
-| Demo | Demo command, saved run record inspection, policy-check step, and eval smoke step can be run without a remote LLM. | Ready for local dry run. | [M0 demo script](../examples/m0-demo-script.md). |
+| Docs | README, launch draft, demo script, local dry-run guide, schemas, contribution guide, and release readiness doc are linked and internally consistent. | README and release readiness link the dry-run guide; launch, demo, schemas, and examples index remain linked. | README project docs, [M0 local release dry-run guide](m0-local-release-dry-run.md), and this file. |
+| Demo | Demo command, saved run record inspection, policy-check step, eval smoke step, and safety checks can be run without a remote LLM. | Ready for local dry run. | [M0 demo script](../examples/m0-demo-script.md) and [M0 local release dry-run guide](m0-local-release-dry-run.md). |
 | Domain | `minervakernel.com` resolves to the intended public project surface or announcement destination. | Not verified by this local document. | Release owner must verify DNS, TLS, and target content before go. |
 | Known Limitations | Public materials plainly say M0 is not auto-repair, not full AIOps, not a CI replacement, not a monitoring replacement, and not dependent on a remote LLM for minimum function. | Documented in launch and demo materials. | [M0 launch draft](m0-launch-blog-post.md) and [M0 demo script](../examples/m0-demo-script.md). |
 
@@ -38,6 +38,10 @@ python3 -m unittest discover -s tests
 python3 -m minerva_kernel.eval_smoke
 ```
 
+Use the [M0 local release dry-run guide](m0-local-release-dry-run.md) for the
+full clean-checkout command sequence, expected artifacts, run record inspection,
+and safety checks.
+
 The public release decision must record the exact command output or CI links for
 the release branch. A passing local run is necessary but not enough if remote CI
 or the public domain are not verified.
@@ -48,6 +52,7 @@ Completed or ready for release verification:
 
 - Positioning is explicit: CPU-local failure interpreter for CI/CD, agents, and ops.
 - README includes a quickstart for `minerva doctor`, `minerva observe --`, and eval smoke.
+- README links the clean-checkout local release dry-run guide.
 - Observation Schema v0 and Decision Schema v0 define the structured contracts.
 - The default safety claim is read-only, policy-gated execution.
 - Redaction expectations are documented for observations, decisions, run records, and contributed failure cases.

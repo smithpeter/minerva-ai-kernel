@@ -79,6 +79,7 @@ LLM interprets. Policy authorizes. Executor acts.
 Start here:
 
 - [M0 release readiness checklist](docs/m0-release-readiness.md)
+- [M0 local release dry-run guide](docs/m0-local-release-dry-run.md)
 - [M0 launch blog post draft](docs/m0-launch-blog-post.md)
 - [M0 demo script](examples/m0-demo-script.md)
 - [Product strategy](docs/product-strategy.md)
