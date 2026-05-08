@@ -17,11 +17,15 @@ REQUIRED_M0_CATEGORIES = frozenset(
     {
         "python",
         "shell-cli",
+        "git",
         "npm-node",
         "docker-build",
         "dns-network",
         "permission",
         "timeout",
+        "ci",
+        "model-api",
+        "schema-json",
         "secret-redaction",
     }
 )
@@ -48,10 +52,20 @@ def load_failure_cases(
     payloads = _load_payloads(cases_path)
     if not payloads:
         raise ValueError("failure corpus is empty")
-    return [
-        _parse_case(payload, f"{cases_path}:{index}")
-        for index, payload in enumerate(payloads, 1)
-    ]
+
+    cases: list[LabeledFailureCase] = []
+    seen_ids: dict[str, int] = {}
+    for index, payload in enumerate(payloads, 1):
+        case = _parse_case(payload, f"{cases_path}:{index}")
+        if case.case_id in seen_ids:
+            first_index = seen_ids[case.case_id]
+            raise ValueError(
+                f"{cases_path}:{index}: duplicate case id {case.case_id!r}; "
+                f"first seen at case {first_index}"
+            )
+        seen_ids[case.case_id] = index
+        cases.append(case)
+    return cases
 
 
 def _load_payloads(path: Path) -> list[dict[str, Any]]:

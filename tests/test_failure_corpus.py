@@ -15,7 +15,7 @@ class FailureCorpusTests(unittest.TestCase):
     def test_default_m0_slice_loads_and_covers_required_categories(self) -> None:
         cases = load_failure_cases()
 
-        self.assertGreaterEqual(len(cases), 20)
+        self.assertGreaterEqual(len(cases), 100)
         self.assertTrue(REQUIRED_M0_CATEGORIES.issubset({case.category for case in cases}))
         self.assertEqual(len({case.case_id for case in cases}), len(cases))
         self.assertTrue(all(case.expected_failure for case in cases))
@@ -32,6 +32,28 @@ class FailureCorpusTests(unittest.TestCase):
             path.write_text(json.dumps([malformed]), encoding="utf-8")
 
             with self.assertRaisesRegex(ValueError, "unsupported expected_action"):
+                load_failure_cases(path)
+
+    def test_loader_rejects_duplicate_ids(self) -> None:
+        first = _valid_case()
+        duplicate = _valid_case()
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "cases.json"
+            path.write_text(json.dumps([first, duplicate]), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "duplicate case id"):
+                load_failure_cases(path)
+
+    def test_loader_rejects_malformed_expected_fields(self) -> None:
+        malformed = _valid_case()
+        malformed["expected_failure"] = ""
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "cases.json"
+            path.write_text(json.dumps([malformed]), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "expected_failure must be non-empty"):
                 load_failure_cases(path)
 
     def test_loader_rejects_policy_mismatch(self) -> None:

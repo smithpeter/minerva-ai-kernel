@@ -13,7 +13,7 @@ that failed in a useful way.
 Every failure case should include:
 
 - `title`: short human-readable summary.
-- `failure_area`: one domain such as `python`, `shell`, `git`, `docker`, `npm`, `ci`, `network`, `model_api`, or `schema`.
+- `failure_area`: one corpus category such as `python`, `shell-cli`, `git`, `npm-node`, `docker-build`, `dns-network`, `permission`, `timeout`, `ci`, `model-api`, `schema-json`, or `secret-redaction`.
 - `trigger`: the command, tool action, CI step, or operation that failed.
 - `exit_code`: process exit code when available, or `unknown`.
 - `observed_signal`: the smallest redacted stderr/stdout/log snippet that shows the failure.
@@ -96,3 +96,11 @@ Reviewers should accept a failure case only when:
 
 When in doubt, ask the contributor to remove more data and keep only the failure
 shape.
+
+## M0 Contribution Target
+
+The M0 corpus currently contains 100 validated synthetic cases. Category counts
+are summarized in `evals/README.md`; every required category has at least 8
+cases. The next contribution target is to move each category toward 15 compact,
+redacted examples while preserving duplicate-ID checks, schema validation, and
+read-only safe actions.

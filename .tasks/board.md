@@ -19,6 +19,6 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T11 | #11 | done | Growth | Draft failure case contribution guide |
 | T12 | #12 | done | Growth | Draft M0 launch blog post and demo script |
 | T13 | #13 | done | Integration | Add install and CLI entry point smoke tests |
-| T14 | #14 | pending | Eval | Expand labeled failure cases to at least 100 |
+| T14 | #14 | done | Eval | Expand labeled failure cases to at least 100 |
 | T15 | #15 | pending | Release | Add M0 release readiness checklist |
 | T16 | #16 | pending | Integration | Add CI markdown summary and run artifact design |

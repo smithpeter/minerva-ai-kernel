@@ -43,8 +43,9 @@ access, Docker, npm, or package installs.
 Each case contains:
 
 - `id`: stable case identifier.
-- `category`: one of `python`, `shell-cli`, `npm-node`, `docker-build`,
-  `dns-network`, `permission`, `timeout`, or `secret-redaction`.
+- `category`: one of `python`, `shell-cli`, `git`, `npm-node`,
+  `docker-build`, `dns-network`, `permission`, `timeout`, `ci`,
+  `model-api`, `schema-json`, or `secret-redaction`.
 - `observation`: an `observation.v0` payload.
 - `expected_failure`: the labeled failure diagnosis.
 - `expected_action`: one Instruction Set v0 action.
@@ -54,6 +55,27 @@ Each case contains:
   redaction count and required redaction types.
 
 The loader in `minerva_kernel.failure_corpus` validates JSON/JSONL cases,
-observation schema, category labels, action labels, policy expectation, and
-redaction expectations for secret cases. Unit tests cover the default slice and
-malformed fixtures.
+observation schema, category labels, action labels, duplicate IDs, policy
+expectation, and redaction expectations for secret cases. Unit tests cover the
+default slice and malformed fixtures.
+
+Current M0 category counts:
+
+| Category | Count |
+| --- | ---: |
+| `python` | 8 |
+| `shell-cli` | 8 |
+| `git` | 9 |
+| `npm-node` | 8 |
+| `docker-build` | 8 |
+| `dns-network` | 8 |
+| `permission` | 8 |
+| `timeout` | 8 |
+| `ci` | 9 |
+| `model-api` | 9 |
+| `schema-json` | 9 |
+| `secret-redaction` | 8 |
+
+Contribution target: keep every required category at 8 or more validated
+cases, then grow each category toward 15 short, redacted examples before
+adding larger generated teacher-labeled corpora.
