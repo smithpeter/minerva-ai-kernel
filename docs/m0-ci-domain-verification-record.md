@@ -7,6 +7,17 @@ This record captures the pre-launch verification process for GitHub Actions,
 intended to be copied or updated for the release commit immediately before a
 public announcement.
 
+Preferred repeatable command:
+
+```bash
+python3 scripts/check-release-readiness.py --content-reviewed "Verified public Minerva page"
+```
+
+The script checks the local commit, attempts to read GitHub Actions status for
+that commit through an existing `gh` session, and checks DNS, TLS, and HTTPS
+reachability for `minervakernel.com`. It does not mutate DNS, deploy a site,
+create credentials, print environment dumps, or print response bodies.
+
 ## Verified Facts From Local Checkout
 
 These facts can be verified from a clean local checkout without external
@@ -19,6 +30,7 @@ credentials.
 | Local compile gate passes. | `python3 -m compileall minerva_kernel` | Command exits 0. |
 | Local unit gate passes. | `python3 -m unittest discover -s tests` | Command exits 0 and reports `OK`. |
 | Local eval smoke gate is available for release readiness. | `python3 -m minerva_kernel.eval_smoke` | Command exits 0 and reports all smoke cases passed. |
+| Repeatable readiness checker is available. | `python3 scripts/check-release-readiness.py --skip-external` | Local checkout metadata is reported and external checks are marked `skipped`. |
 | Public docs can be searched for launch blockers. | `rg -n "auto[- ]?repair|replace CI|full AIOps|credential|secret|API key" README.md docs examples` | Any match is reviewed in context before announcement. |
 
 Local verification is necessary but not sufficient for release. The release
@@ -42,6 +54,42 @@ not require adding secrets to this checkout.
 The commands below are safe to run locally. They do not modify DNS, deploy a
 site, create external accounts, or require secret values.
 
+Repeatable readiness checker:
+
+```bash
+python3 scripts/check-release-readiness.py --content-reviewed "Verified public Minerva page"
+```
+
+Local-only dry run, useful when network or repository access is unavailable:
+
+```bash
+python3 scripts/check-release-readiness.py --skip-external
+```
+
+The checker output is bounded for public issue comments. It reports statuses as
+`pass`, `fail`, `unverified`, `manual`, or `skipped`; omits local full paths,
+tokens, response bodies, and environment dumps; and exits non-zero when an
+automated check fails, an external check is unverified, or HTTPS content review
+has not been recorded. Use `--content-reviewed` only after the release owner has
+opened the HTTPS page and confirmed that it is the intended public Minerva
+surface.
+
+What the checker verifies locally:
+
+- Repository root basename, current commit SHA, current branch, and repository
+  slug.
+- Whether the repeatable process can run without external access by using
+  `--skip-external`.
+
+What requires external permissions or network availability:
+
+- GitHub Actions status for the current commit requires network access, the
+  `gh` CLI, and either public API access or an already authenticated session.
+- DNS readiness requires public resolver availability.
+- TLS readiness requires network access and public CA trust.
+- HTTPS readiness requires the public endpoint to respond.
+- Final HTTPS content correctness requires release-owner human review.
+
 Local release gates:
 
 ```bash
@@ -54,6 +102,7 @@ GitHub Actions status, when the release owner already has access through the
 GitHub UI or an existing `gh` session:
 
 ```bash
+python3 scripts/check-release-readiness.py --skip-domain
 git rev-parse HEAD
 git rev-parse --abbrev-ref HEAD
 gh run list --repo smithpeter/minerva-ai-kernel --branch "$(git rev-parse --abbrev-ref HEAD)" --limit 10
@@ -66,6 +115,7 @@ this record.
 Domain DNS and TLS checks:
 
 ```bash
+python3 scripts/check-release-readiness.py --skip-github-actions --content-reviewed "Verified public Minerva page"
 dig +short A minervakernel.com
 dig +short AAAA minervakernel.com
 dig +short CNAME minervakernel.com

@@ -117,6 +117,13 @@ The workflow writes `minerva render-ci-summary` output to
 diagnostic only: it publishes bounded evidence, exits with the observed command
 status, and does not perform auto-repair or execute Minerva-proposed actions.
 
+Before a public release, collect repeatable GitHub Actions and
+`minervakernel.com` DNS/TLS/HTTPS evidence with:
+
+```bash
+python3 scripts/check-release-readiness.py --content-reviewed "Verified public Minerva page"
+```
+
 ## Local AI Team
 
 Minerva has a local task board in `.tasks/` and a scoped agent loop:

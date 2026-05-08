@@ -48,6 +48,8 @@ save local evidence for review and evaluation.
 - Added a CI and domain verification record that separates facts observable
   from a local checkout from release-owner confirmations for GitHub Actions,
   DNS, TLS, HTTPS content, and launch-blocker review.
+- Added `scripts/check-release-readiness.py` for repeatable, bounded GitHub
+  Actions and `minervakernel.com` DNS/TLS/HTTPS readiness evidence.
 - Recorded full local release dry-run evidence for commit
   `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7`, including install/smoke,
   `doctor`, `observe`, run-record inspection, `policy-check`, eval smoke,

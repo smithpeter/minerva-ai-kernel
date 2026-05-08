@@ -55,6 +55,18 @@ to record the remote GitHub Actions status, `minervakernel.com` DNS and TLS
 target, HTTPS content check, and launch-blocker review without adding secrets to
 the checkout.
 
+For the repeatable CI/domain evidence pass, run:
+
+```bash
+python3 scripts/check-release-readiness.py --content-reviewed "Verified public Minerva page"
+```
+
+The script reports local checkout metadata, checks GitHub Actions for the
+current commit when `gh` and network access are available, checks DNS/TLS/HTTPS
+for `minervakernel.com`, and keeps output bounded for public issue comments. Use
+`python3 scripts/check-release-readiness.py --skip-external` to verify the local
+reporting path when external access is unavailable.
+
 The public release decision must record the exact command output or CI links for
 the release branch. A passing local run is necessary but not enough if remote CI
 or the public domain are not verified.
