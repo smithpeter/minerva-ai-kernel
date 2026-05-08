@@ -22,3 +22,7 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T14 | #14 | done | Eval | Expand labeled failure cases to at least 100 |
 | T15 | #15 | done | Release | Add M0 release readiness checklist |
 | T16 | #16 | done | Integration | Add CI markdown summary and run artifact design |
+| T17 | #17 | pending | Integration | Implement deterministic CI summary and artifact renderers |
+| T18 | #18 | pending | Release | Add local release dry-run guide and command checklist |
+| T19 | #19 | pending | Release | Add CI and domain verification record |
+| T20 | #20 | pending | Planning | Seed next roadmap tasks after M0 readiness |
