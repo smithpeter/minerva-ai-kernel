@@ -2,12 +2,39 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+from dataclasses import dataclass
 from pathlib import Path
 
-from .policy import validate_payload
+from .planner import build_prompt
+from .policy import validate_action, validate_payload
+from .providers import ModelProvider
+from .redaction import RedactionSummary, merge_redaction_summaries
+from .router import LocalLLMRouter
+from .types import Decision, Observation, PolicyDecision
 
 
-def main(argv: list[str] | None = None) -> None:
+@dataclass(frozen=True)
+class Diagnosis:
+    decision: Decision
+    policy_decision: PolicyDecision
+    redactions: RedactionSummary | None
+
+
+def diagnose_file(path: str | Path, provider: ModelProvider | None = None) -> Diagnosis:
+    observation = _load_observation(path)
+    redacted_observation = observation.redacted()
+    messages = build_prompt(redacted_observation)
+    decision = LocalLLMRouter(provider=provider).propose(messages)
+    policy_decision = validate_action(decision)
+    redactions = _merge_optional_redactions(
+        redacted_observation.redactions,
+        decision.redactions,
+    )
+    return Diagnosis(decision, policy_decision, redactions)
+
+
+def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -> None:
     parser = argparse.ArgumentParser(
         prog="minerva",
         description="CPU-local failure interpreter for CI/CD, agents, and ops.",
@@ -29,7 +56,16 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.command == "diagnose":
-        raise SystemExit("diagnose is planned for M0 and not implemented yet")
+        try:
+            diagnosis = diagnose_file(args.path, provider=provider)
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            print(f"Diagnose failed: {exc}", file=sys.stderr)
+            raise SystemExit(1) from exc
+
+        _print_diagnosis(diagnosis)
+        if not diagnosis.policy_decision.allowed:
+            raise SystemExit(2)
+        return
 
     if args.command == "observe":
         raise SystemExit("observe is planned for M0 and not implemented yet")
@@ -43,6 +79,43 @@ def main(argv: list[str] | None = None) -> None:
         raise SystemExit(0 if decision.allowed else 2)
 
     parser.print_help()
+
+
+def _load_observation(path: str | Path) -> Observation:
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("observation JSON must be an object")
+    return Observation.from_dict(payload)
+
+
+def _print_diagnosis(diagnosis: Diagnosis) -> None:
+    decision = diagnosis.decision
+    policy_decision = diagnosis.policy_decision
+    status = "allowed" if policy_decision.allowed else "blocked"
+
+    print(f"Failure: {decision.failure}")
+    print(f"Action: {decision.action}")
+    print(f"Confidence: {decision.confidence}")
+    print(f"Risk: {decision.risk}")
+    print(f"Escalation: {str(decision.escalate).lower()}")
+    print(f"Policy decision: {status}")
+    print(f"Policy decision reason: {policy_decision.reason}")
+    if diagnosis.redactions and diagnosis.redactions.count:
+        print(
+            "Redaction summary: "
+            f"count={diagnosis.redactions.count} "
+            f"types={', '.join(diagnosis.redactions.types)}"
+        )
+
+
+def _merge_optional_redactions(
+    *summaries: RedactionSummary | None,
+) -> RedactionSummary | None:
+    present = [summary for summary in summaries if summary and summary.count]
+    if not present:
+        return None
+    merged = merge_redaction_summaries(*present)
+    return merged if merged.count else None
 
 
 if __name__ == "__main__":

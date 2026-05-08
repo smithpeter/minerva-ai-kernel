@@ -137,6 +137,39 @@ class Observation:
             redactions=summary if summary.count else None,
         )
 
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any]) -> "Observation":
+        schema_version = payload.get("schema_version")
+        if schema_version != "observation.v0":
+            raise ValueError(f"unsupported observation schema_version: {schema_version}")
+
+        runtime = payload.get("runtime", {})
+        if not isinstance(runtime, dict):
+            raise ValueError("runtime must be an object")
+
+        exit_code = payload.get("exit_code")
+        if exit_code is not None and (
+            not isinstance(exit_code, int) or isinstance(exit_code, bool)
+        ):
+            raise ValueError("exit_code must be an integer or null")
+
+        duration_ms = payload.get("duration_ms")
+        if not isinstance(duration_ms, int) or isinstance(duration_ms, bool):
+            raise ValueError("duration_ms must be an integer")
+
+        return cls(
+            command=_required_string(payload, "command"),
+            cwd=_required_string(payload, "cwd"),
+            exit_code=exit_code,
+            stdout_tail=_required_string(payload, "stdout_tail"),
+            stderr_tail=_required_string(payload, "stderr_tail"),
+            duration_ms=duration_ms,
+            source=_required_string(payload, "source"),
+            policy_summary=_required_string(payload, "policy_summary"),
+            runtime=dict(runtime),
+            redactions=_redaction_summary_from_dict(payload.get("redactions")),
+        )
+
 
 @dataclass(frozen=True)
 class Decision:
@@ -256,3 +289,10 @@ def _redaction_summary_from_dict(value: Any) -> RedactionSummary | None:
         return None
     summary = RedactionSummary(count=count, types=tuple(str(item) for item in types))
     return summary if summary.count else None
+
+
+def _required_string(payload: dict[str, Any], key: str) -> str:
+    value = payload.get(key)
+    if not isinstance(value, str):
+        raise ValueError(f"{key} must be a string")
+    return value
