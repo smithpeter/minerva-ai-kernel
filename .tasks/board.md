@@ -26,7 +26,7 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T18 | #18 | done | Release | Add local release dry-run guide and command checklist |
 | T19 | #19 | done | Release | Add CI and domain verification record |
 | T20 | #20 | done | Planning | Seed next roadmap tasks after M0 readiness |
-| T21 | #21 | pending | Integration | Wire Minerva CI renderers into the GitHub Actions smoke workflow |
+| T21 | #21 | done | Integration | Wire Minerva CI renderers into the GitHub Actions smoke workflow |
 | T22 | #22 | pending | Integration | Add CI renderer fixture and artifact contract regression coverage |
 | T23 | #23 | pending | Integration | Add first SDK and agent integration examples |
 | T24 | #24 | pending | Kernel / Research | Add local model provider path and CPU model eval plan |

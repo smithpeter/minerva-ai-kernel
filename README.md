@@ -98,7 +98,18 @@ This repository is being initialized from the Minerva research workspace. The fi
 
 ## CI Gate
 
-Every push and pull request runs the GitHub Actions CI smoke gate. It compiles `minerva_kernel`, runs the unit test suite, and executes `python -m minerva_kernel.eval_smoke`.
+Every push and pull request runs the GitHub Actions CI smoke gate through
+Minerva:
+
+```bash
+minerva observe -- bash -c 'python3 -m compileall minerva_kernel && python3 -m unittest discover -s tests && python3 -m minerva_kernel.eval_smoke'
+```
+
+The workflow writes `minerva render-ci-summary` output to
+`$GITHUB_STEP_SUMMARY` and saves a redacted `minerva-ci-run.json` artifact from
+`minerva render-ci-artifact` when a run record exists. The integration is
+diagnostic only: it publishes bounded evidence, exits with the observed command
+status, and does not perform auto-repair or execute Minerva-proposed actions.
 
 ## Local AI Team
 

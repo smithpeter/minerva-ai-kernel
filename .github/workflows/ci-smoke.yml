@@ -18,11 +18,38 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Compile package
-        run: python -m compileall minerva_kernel
+      - name: Install Minerva CLI
+        run: python3 -m pip install --no-deps .
 
-      - name: Run unit and install entry smoke tests
-        run: python -m unittest discover -s tests
+      - name: Observe CI smoke command with Minerva
+        shell: bash
+        run: |
+          set +e
+          minerva observe -- bash -c 'python3 -m compileall minerva_kernel && python3 -m unittest discover -s tests && python3 -m minerva_kernel.eval_smoke'
+          minerva_status=$?
+          set -e
 
-      - name: Run evaluation smoke test
-        run: python -m minerva_kernel.eval_smoke
+          run_record="$(ls -t .minerva/runs/*.json 2>/dev/null | head -n 1 || true)"
+          if [ -z "$run_record" ]; then
+            {
+              echo "# Minerva CI Summary"
+              echo ""
+              echo "Minerva did not write a run record."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit "$minerva_status"
+          fi
+
+          minerva render-ci-summary "$run_record" >> "$GITHUB_STEP_SUMMARY"
+          minerva render-ci-artifact "$run_record" > minerva-ci-run.json
+
+          observed_status="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["observation"]["exit_code"])' "$run_record")"
+          exit "$observed_status"
+
+      - name: Upload Minerva CI artifact
+        if: ${{ always() && hashFiles('minerva-ci-run.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: minerva-ci-run
+          path: minerva-ci-run.json
+          if-no-files-found: error
+          retention-days: 7
