@@ -26,6 +26,7 @@ printf -- '- /Users/zouyongming/VoxSign-decide-review\n'
 bash scripts/check-contamination.sh
 
 section "Local Task Board"
+bash scripts/ai-team-coordinator.sh
 if [[ -f .tasks/board.md ]]; then
     sed -n '1,80p' .tasks/board.md
 else
@@ -40,6 +41,6 @@ else
 fi
 
 section "Recommended Next Action"
-printf '1. Assign T1 or T2 to an AI worker.\n'
-printf '2. Worker must edit only allowed files in its task card.\n'
+printf '1. Keep .tasks/board.md populated with small pending tasks.\n'
+printf '2. Let launchd/systemd run scripts/ai-team-tick.sh, or kickstart one tick manually.\n'
 printf '3. Worker must run compile/tests and update Output before claiming done.\n'

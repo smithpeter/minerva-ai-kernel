@@ -11,6 +11,7 @@ cd "$ROOT"
 
 bash scripts/check-project-boundary.sh
 bash scripts/check-contamination.sh
+bash scripts/ai-team-coordinator.sh
 
 LOG_DIR=".minerva/ai-team/logs"
 LOCK_DIR=".minerva/ai-team/lock"
