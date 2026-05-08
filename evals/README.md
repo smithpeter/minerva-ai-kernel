@@ -59,22 +59,24 @@ observation schema, category labels, action labels, duplicate IDs, policy
 expectation, and redaction expectations for secret cases. Unit tests cover the
 default slice and malformed fixtures.
 
-Current M0 category counts:
+The M1 metrics report is published in `evals/m1_eval_report.md`.
+
+Current corpus category counts after M1 growth:
 
 | Category | Count |
 | --- | ---: |
-| `python` | 8 |
-| `shell-cli` | 8 |
-| `git` | 9 |
-| `npm-node` | 8 |
-| `docker-build` | 8 |
-| `dns-network` | 8 |
-| `permission` | 8 |
-| `timeout` | 8 |
-| `ci` | 9 |
-| `model-api` | 9 |
-| `schema-json` | 9 |
-| `secret-redaction` | 8 |
+| `python` | 9 |
+| `shell-cli` | 9 |
+| `git` | 10 |
+| `npm-node` | 9 |
+| `docker-build` | 9 |
+| `dns-network` | 9 |
+| `permission` | 9 |
+| `timeout` | 9 |
+| `ci` | 10 |
+| `model-api` | 10 |
+| `schema-json` | 10 |
+| `secret-redaction` | 9 |
 
 Contribution target: keep every required category at 8 or more validated
 cases, then grow each category toward 15 short, redacted examples before

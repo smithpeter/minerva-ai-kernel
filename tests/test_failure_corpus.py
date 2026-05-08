@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from collections import Counter
 from pathlib import Path
 
 from minerva_kernel.failure_corpus import (
@@ -15,8 +16,13 @@ class FailureCorpusTests(unittest.TestCase):
     def test_default_m0_slice_loads_and_covers_required_categories(self) -> None:
         cases = load_failure_cases()
 
-        self.assertGreaterEqual(len(cases), 100)
-        self.assertTrue(REQUIRED_M0_CATEGORIES.issubset({case.category for case in cases}))
+        counts = Counter(case.category for case in cases)
+
+        self.assertGreaterEqual(len(cases), 112)
+        self.assertTrue(REQUIRED_M0_CATEGORIES.issubset(counts))
+        self.assertTrue(
+            all(counts[category] >= 9 for category in REQUIRED_M0_CATEGORIES)
+        )
         self.assertEqual(len({case.case_id for case in cases}), len(cases))
         self.assertTrue(all(case.expected_failure for case in cases))
         self.assertTrue(all(case.expected_action for case in cases))

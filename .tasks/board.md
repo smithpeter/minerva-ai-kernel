@@ -30,5 +30,5 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T22 | #22 | done | Integration | Add CI renderer fixture and artifact contract regression coverage |
 | T23 | #23 | done | Integration | Add first SDK and agent integration examples |
 | T24 | #24 | done | Kernel / Research | Add local model provider path and CPU model eval plan |
-| T25 | #25 | pending | Eval | Grow failure corpus and publish M1 eval metrics |
+| T25 | #25 | done | Eval | Grow failure corpus and publish M1 eval metrics |
 | T26 | #26 | pending | Docs / Ecosystem | Add ecosystem contribution docs for packs and adapters |
