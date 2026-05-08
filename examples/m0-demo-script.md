@@ -200,6 +200,7 @@ kernel.
 
 ## References
 
+- [M0 release readiness checklist](../docs/m0-release-readiness.md)
 - [Launch blog post draft](../docs/m0-launch-blog-post.md)
 - [Product strategy](../docs/product-strategy.md)
 - [Observation Schema v0](../docs/observation-schema-v0.md)

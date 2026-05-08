@@ -151,6 +151,7 @@ Safe Recovery Decision Rate: 5/5 (100.0%)
 
 ## Read More
 
+- [M0 release readiness checklist](m0-release-readiness.md)
 - [Product strategy](product-strategy.md)
 - [Architecture](architecture.md)
 - [Observation Schema v0](observation-schema-v0.md)
