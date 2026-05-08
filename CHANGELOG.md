@@ -66,6 +66,16 @@ save local evidence for review and evaluation.
   public HTTPS content must include Minerva signals and must not include
   VoxSign markers, with offline unit tests for pass, missing-brand fail, and
   VoxSign fail behavior.
+- Added a standalone static Minerva public page artifact at
+  `public-site/index.html` for nginx or static-host serving. The page presents
+  the narrow M0 claim, docs/GitHub links, safety non-claims, and CPU-local
+  failure interpreter positioning without a runtime build step.
+- Added a `minervakernel.com` domain cutover runbook covering nginx and managed
+  static-host paths, certificate requirements, DNS cutover, rollback, and
+  readiness verification commands.
+- Added a public artifact test that checks required Minerva positioning,
+  docs/GitHub links, standalone static HTML constraints, and rejected brand
+  markers in `public-site/`.
 - Recorded the current `minervakernel.com` no-go blocker: on 2026-05-08, TLS
   diagnostics for commit `109b524467b6fb6cf78f00c86416b070c4691226` showed
   `CN=test.voxsign.net`, and a certificate-verification-bypassed fetch returned
@@ -132,6 +142,8 @@ save local evidence for review and evaluation.
 
 - [M0 release readiness checklist](docs/m0-release-readiness.md)
 - [M0 local release dry-run guide](docs/m0-local-release-dry-run.md)
+- [Standalone Minerva public page artifact](public-site/index.html)
+- [minervakernel.com domain cutover runbook](docs/minervakernel-domain-cutover-runbook.md)
 - [2026-05-08 post-metadata-fix local release dry-run evidence](.minerva/release-evidence/2026-05-08-post-metadata-fix-local-release-dry-run.md)
 - [2026-05-08 local release dry-run evidence](.minerva/release-evidence/2026-05-08-local-release-dry-run.md)
 - [M0 CI and domain verification record](docs/m0-ci-domain-verification-record.md)
@@ -147,9 +159,9 @@ save local evidence for review and evaluation.
 
 - Confirm the GitHub Actions compile/test/eval gate is green for the exact
   release branch or announcement commit.
-- Fix and verify `minervakernel.com` DNS, TLS certificate identity, HTTPS
-  Minerva page content, and VoxSign contamination guard before any public
-  announcement.
+- Cut over `minervakernel.com` with the domain runbook, then verify DNS, TLS
+  certificate identity, HTTPS Minerva page content, and VoxSign contamination
+  guard before any public announcement.
 - Continue M1 CI renderer work so every branch publishes bounded Minerva
   summary and artifact evidence.
 - Add SDK, agent, and CI integration examples that preserve redaction,

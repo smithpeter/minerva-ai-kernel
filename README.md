@@ -10,6 +10,11 @@ Project domain:
 minervakernel.com
 ```
 
+Standalone public page artifact:
+
+- [public-site/index.html](public-site/index.html)
+- [minervakernel.com domain cutover runbook](docs/minervakernel-domain-cutover-runbook.md)
+
 ## Positioning
 
 ```text
@@ -85,6 +90,8 @@ Start here:
 - [M1 roadmap task seeds](docs/m1-roadmap-task-seeds.md)
 - [M0 release readiness checklist](docs/m0-release-readiness.md)
 - [M0 local release dry-run guide](docs/m0-local-release-dry-run.md)
+- [Standalone Minerva public page artifact](public-site/index.html)
+- [minervakernel.com domain cutover runbook](docs/minervakernel-domain-cutover-runbook.md)
 - [M0 launch blog post draft](docs/m0-launch-blog-post.md)
 - [M0 demo script](examples/m0-demo-script.md)
 - [Model strategy and local provider path](docs/model-strategy.md)
@@ -131,6 +138,10 @@ The readiness checker keeps TLS verification enabled, requires Minerva
 brand/content signals in the public HTTPS page, and rejects VoxSign markers in
 redirects or page content. The `--content-reviewed` note records human review;
 it does not override TLS validation or the automated brand guard.
+Serve [public-site/index.html](public-site/index.html) for the intended static
+Minerva page, and use the
+[domain cutover runbook](docs/minervakernel-domain-cutover-runbook.md) for
+nginx/static-host, certificate, rollback, and verification steps.
 
 For local offline editable-install readiness without network access, run:
 

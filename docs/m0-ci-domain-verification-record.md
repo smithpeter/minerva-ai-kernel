@@ -7,6 +7,12 @@ This record captures the pre-launch verification process for GitHub Actions,
 intended to be copied or updated for the release commit immediately before a
 public announcement.
 
+The intended static public page artifact is
+[public-site/index.html](../public-site/index.html). Use the
+[minervakernel.com domain cutover runbook](minervakernel-domain-cutover-runbook.md)
+for nginx/static-host setup, certificate requirements, rollback, and readiness
+verification commands.
+
 Preferred repeatable command:
 
 ```bash
@@ -32,10 +38,10 @@ certificate with subject `CN=test.voxsign.net`, which is not valid for
 returned a VoxSign page title and VoxSign content.
 
 Required external fix: `minervakernel.com` must serve a certificate valid for
-`minervakernel.com` and an intended Minerva page, not a VoxSign certificate,
-VoxSign preview, parking page, stale preview, or unrelated service. Do not use
-`curl -k`, `--insecure`, or any certificate-verification bypass as passing
-readiness evidence.
+`minervakernel.com` and the intended Minerva page artifact, not a VoxSign
+certificate, VoxSign preview, parking page, stale preview, or unrelated
+service. Do not use `curl -k`, `--insecure`, or any certificate-verification
+bypass as passing readiness evidence.
 
 Recheck the domain blocker with:
 
@@ -55,6 +61,7 @@ credentials.
 | Local compile gate passes. | `python3 -m compileall minerva_kernel` | Command exits 0. |
 | Local unit gate passes. | `python3 -m unittest discover -s tests` | Command exits 0 and reports `OK`. |
 | Local eval smoke gate is available for release readiness. | `python3 -m minerva_kernel.eval_smoke` | Command exits 0 and reports all smoke cases passed. |
+| Public static artifact is present and clean. | `python3 -m unittest tests.test_public_site_artifact` | Command exits 0 and verifies required Minerva signals, docs/GitHub links, and no rejected markers in `public-site/`. |
 | Repeatable readiness checker is available. | `python3 scripts/check-release-readiness.py --skip-external` | Local checkout metadata and current-interpreter install-backend status are reported; external checks are marked `skipped`. |
 | Fresh venv has the offline editable-install backend. | `python3 scripts/check-release-readiness.py --skip-external --install-backend fresh-venv` | `local_install_backend` is `pass`, or a setup blocker is recorded before the install dry run. |
 | Public docs can be searched for launch blockers. | `rg -n "auto[- ]?repair|replace CI|full AIOps|credential|secret|API key" README.md docs examples` | Any match is reviewed in context before announcement. |
@@ -72,7 +79,7 @@ not require adding secrets to this checkout.
 | GitHub Actions status | The GitHub Actions compile/test/eval smoke gate is green on the exact release branch or announcement commit. | Workflow run URL, commit SHA, branch, conclusion, and timestamp. |
 | Domain DNS target | `minervakernel.com` resolves to the intended public project surface or announcement destination. | DNS provider target, observed A/AAAA/CNAME records, and timestamp. |
 | Domain TLS | `https://minervakernel.com/` presents a valid certificate for `minervakernel.com`. | Certificate subject/SAN, issuer, validity window, and timestamp. |
-| Domain content | The loaded HTTPS page is the intended public Minerva page, not a VoxSign page, parking page, stale preview, or unrelated service. | URL, page title or landing identifier, screenshot or reviewer note, and timestamp. |
+| Domain content | The loaded HTTPS page is the intended public Minerva page from `public-site/index.html` or an approved successor, not a VoxSign page, parking page, stale preview, or unrelated service. | URL, page title or landing identifier, screenshot or reviewer note, and timestamp. |
 | Launch blockers | No release-readiness launch blocker is open. | Checklist reviewer, reviewed commit, and explicit go/no-go decision. |
 
 ## No-Secret Commands
@@ -144,6 +151,7 @@ Local release gates:
 python3 -m compileall minerva_kernel
 python3 -m unittest discover -s tests
 python3 -m minerva_kernel.eval_smoke
+python3 -m unittest tests.test_public_site_artifact
 ```
 
 GitHub Actions status, when the release owner already has access through the
@@ -198,6 +206,7 @@ Manual confirmations:
 - minervakernel.com DNS target:
 - minervakernel.com TLS certificate:
 - minervakernel.com HTTPS content:
+- Public artifact/runbook reviewed:
 - Release owner go/no-go:
 ```
 

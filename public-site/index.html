@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minerva AI Kernel - CPU-local failure interpreter</title>
+  <meta
+    name="description"
+    content="Minerva AI Kernel is a CPU-local failure interpreter for CI/CD, agents, and ops.">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #fbfbf8;
+      --surface: #ffffff;
+      --ink: #101316;
+      --muted: #56616d;
+      --line: #d9dfdf;
+      --accent: #0b766f;
+      --accent-strong: #084f4b;
+      --warn: #a95f17;
+      --code: #151a1e;
+      --code-line: #2a333a;
+      --code-text: #edf2f0;
+      --ok: #58d68d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+      letter-spacing: 0;
+    }
+
+    a {
+      color: var(--accent-strong);
+      text-decoration-thickness: 0.08em;
+      text-underline-offset: 0.18em;
+    }
+
+    .site-header,
+    .site-footer {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .site-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand {
+      color: var(--ink);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      font-size: 0.95rem;
+    }
+
+    main {
+      overflow: hidden;
+    }
+
+    .band {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 64px 0;
+    }
+
+    .intro {
+      padding-top: 72px;
+    }
+
+    .kicker {
+      margin: 0 0 12px;
+      color: var(--accent-strong);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      max-width: 860px;
+      margin-bottom: 18px;
+      font-size: clamp(2.6rem, 7vw, 5.75rem);
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-bottom: 18px;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 1.02rem;
+    }
+
+    .lead {
+      max-width: 780px;
+      margin-bottom: 24px;
+      color: var(--muted);
+      font-size: clamp(1.1rem, 2vw, 1.35rem);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 28px 0 36px;
+    }
+
+    .action {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 16px;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      background: var(--accent);
+      color: #ffffff;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .action.secondary {
+      background: transparent;
+      color: var(--accent-strong);
+    }
+
+    .terminal {
+      width: min(840px, 100%);
+      margin: 0;
+      border: 1px solid #2f383f;
+      border-radius: 8px;
+      background: var(--code);
+      color: var(--code-text);
+      overflow: hidden;
+      box-shadow: 0 18px 48px rgb(16 19 22 / 12%);
+    }
+
+    .terminal-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--code-line);
+      color: #b9c3c0;
+      font-size: 0.82rem;
+    }
+
+    .terminal-status {
+      color: var(--ok);
+      font-weight: 700;
+    }
+
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow-x: auto;
+      font: 0.93rem/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .panel {
+      min-height: 100%;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+
+    .panel p:last-child,
+    .panel ul:last-child {
+      margin-bottom: 0;
+    }
+
+    .list {
+      padding-left: 1.1rem;
+      color: var(--muted);
+    }
+
+    .list li + li {
+      margin-top: 8px;
+    }
+
+    .claim {
+      display: grid;
+      grid-template-columns: minmax(0, 0.85fr) minmax(280px, 1.15fr);
+      gap: 40px;
+      align-items: start;
+    }
+
+    .steps {
+      counter-reset: step;
+      display: grid;
+      gap: 12px;
+    }
+
+    .step {
+      position: relative;
+      padding: 18px 18px 18px 58px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #eef6f4;
+      color: var(--accent-strong);
+      font-weight: 800;
+      line-height: 26px;
+      text-align: center;
+    }
+
+    .link-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .link-list a {
+      display: block;
+      min-height: 100%;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .link-list span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 400;
+    }
+
+    .note {
+      padding: 18px;
+      border-left: 4px solid var(--warn);
+      background: #fff8ef;
+      color: #473224;
+    }
+
+    .site-footer {
+      padding: 26px 0 34px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 760px) {
+      .site-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .section {
+        padding: 44px 0;
+      }
+
+      .intro {
+        padding-top: 52px;
+      }
+
+      .grid,
+      .claim,
+      .link-list {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .action {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header" aria-label="Minerva site header">
+    <a class="brand" href="https://github.com/smithpeter/minerva-ai-kernel">Minerva AI Kernel</a>
+    <nav class="nav" aria-label="Primary">
+      <a href="https://github.com/smithpeter/minerva-ai-kernel">GitHub</a>
+      <a href="https://github.com/smithpeter/minerva-ai-kernel/blob/main/README.md">README</a>
+      <a href="https://github.com/smithpeter/minerva-ai-kernel/blob/main/docs/m0-release-readiness.md">M0 Readiness</a>
+      <a href="https://github.com/smithpeter/minerva-ai-kernel/blob/main/docs/integration-recipes.md">Integrations</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="band">
+      <div class="section intro">
+        <p class="kicker">Public artifact for minervakernel.com</p>
+        <h1>Minerva AI Kernel</h1>
+        <p class="lead">
+          CPU-local failure interpreter for CI/CD, agents, and ops.
+          Minerva keeps a minimum local reasoning path available when models,
+          tools, networks, code, configuration, or execution environments fail.
+        </p>
+        <div class="actions" aria-label="Project links">
+          <a class="action" href="https://github.com/smithpeter/minerva-ai-kernel">Open GitHub</a>
+          <a class="action secondary" href="https://github.com/smithpeter/minerva-ai-kernel/blob/main/docs/m0-local-release-dry-run.md">Read the local dry run</a>
+        </div>
+        <figure class="terminal" aria-label="Example Minerva command transcript">
+          <div class="terminal-title">
+            <span>minimum local path</span>
+            <span class="terminal-status">CPU-local</span>
+          </div>
+          <pre><code>$ minerva observe -- pytest
+capture stdout/stderr/exit code
+build observation.v0
+produce decision.v0
+policy-check decision
+save .minerva/runs/&lt;run-id&gt;.json</code></pre>
+        </figure>
+      </div>
+    </section>
+
+    <section class="band" id="m0-claim">
+      <div class="section claim">
+        <div>
+          <p class="kicker">Narrow M0 claim</p>
+          <h2>Observe a failure, structure it, and keep the next decision bounded.</h2>
+          <p class="lead">
+            M0 is intentionally small: it records command failure evidence,
+            emits a structured local decision, applies policy, and preserves a
+            run record for review.
+          </p>
+        </div>
+        <div class="steps" aria-label="M0 flow">
+          <div class="step">
+            <h3>Run and capture</h3>
+            <p>Execute a command under observation and capture bounded stdout, stderr, exit code, cwd, duration, and runtime metadata.</p>
+          </div>
+          <div class="step">
+            <h3>Interpret locally</h3>
+            <p>Use a CPU-local path for the minimum function, with no remote LLM required for the baseline flow.</p>
+          </div>
+          <div class="step">
+            <h3>Policy-check first</h3>
+            <p>Model output is not authority. The structured decision is checked by policy before any consumer acts.</p>
+          </div>
+          <div class="step">
+            <h3>Save evidence</h3>
+            <p>Write a local run record so humans and CI systems can inspect bounded, redacted failure context.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band">
+      <div class="section">
+        <p class="kicker">Safety boundary</p>
+        <h2>LLM interprets. Policy authorizes. Executor acts.</h2>
+        <div class="grid">
+          <article class="panel">
+            <h3>Read-only by default</h3>
+            <p>Default policy blocks shell execution, filesystem writes, destructive commands, credential access, unknown actions, and low-confidence actions.</p>
+          </article>
+          <article class="panel">
+            <h3>Redacted evidence</h3>
+            <p>Known sensitive values are redacted before model input and before persisted observations, decisions, run records, or CI artifacts are written.</p>
+          </article>
+          <article class="panel">
+            <h3>Diagnostic CI output</h3>
+            <p>CI summaries and artifacts are bounded evidence. The observed command exit code remains the gate.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="non-claims">
+      <div class="section">
+        <p class="kicker">Non-claims</p>
+        <h2>What M0 does not claim</h2>
+        <ul class="list">
+          <li>M0 does not auto-repair systems.</li>
+          <li>M0 is not a full AIOps platform.</li>
+          <li>M0 does not replace CI, monitoring, tests, incident platforms, or human review.</li>
+          <li>M0 does not execute arbitrary model-generated shell commands.</li>
+          <li>M0 does not require a remote LLM for the minimum local path.</li>
+          <li>The smoke eval is a wiring and policy signal, not a production reliability benchmark.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="band" id="docs">
+      <div class="section">
+        <p class="kicker">Docs and source</p>
+        <h2>Read the public project materials</h2>
+        <div class="link-list">
+          <a href="https://github.com/smithpeter/minerva-ai-kernel">
+            GitHub repository
+            <span>Source, tests, CLI, examples, and issue tracker.</span>
+          </a>
+          <a href="https://github.com/smithpeter/minerva-ai-kernel/blob/main/docs/m0-release-readiness.md">
+            M0 release readiness
+            <span>Go/no-go checklist for local CLI, CI, docs, domain, and known limitations.</span>
+          </a>
+          <a href="https://github.com/smithpeter/minerva-ai-kernel/blob/main/docs/m0-local-release-dry-run.md">
+            Local release dry run
+            <span>Clean-checkout commands for install, observe, policy, eval, and safety checks.</span>
+          </a>
+          <a href="https://github.com/smithpeter/minerva-ai-kernel/blob/main/docs/m0-launch-blog-post.md">
+            M0 launch draft
+            <span>Narrow positioning and public non-claims.</span>
+          </a>
+          <a href="https://github.com/smithpeter/minerva-ai-kernel/blob/main/docs/integration-recipes.md">
+            Integration recipes
+            <span>CI, SDK, and agent integration guidance that preserves policy boundaries.</span>
+          </a>
+          <a href="https://github.com/smithpeter/minerva-ai-kernel/blob/main/docs/m0-ci-domain-verification-record.md">
+            CI and domain verification
+            <span>Repeatable release-owner evidence shape for GitHub Actions, DNS, TLS, and HTTPS content.</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section">
+        <p class="kicker">Domain readiness</p>
+        <h2>This is the static page intended for the domain cutover.</h2>
+        <p class="note">
+          Serving this file is not enough to declare the domain fixed. The
+          release owner must verify DNS, a valid certificate for
+          minervakernel.com, HTTPS reachability, Minerva page content, and the
+          automated release readiness guard before public announcement.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Minerva AI Kernel. CPU-local failure interpreter for CI/CD, agents, and ops.</p>
+  </footer>
+</body>
+</html>
