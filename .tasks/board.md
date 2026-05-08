@@ -45,3 +45,4 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T37 | #37 | done | Release / Integration | Add local install environment readiness check |
 | T38 | #38 | done | Release / Integration | Auto-discover local Python candidates for install backend readiness |
 | T39 | #39 | done | Integration / Release | Fix CI smoke failure caused by Python 3.x selecting 3.14 |
+| T40 | #40 | pending | Release / Integration | Add domain brand contamination guard to release readiness |
