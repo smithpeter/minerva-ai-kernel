@@ -24,5 +24,5 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T16 | #16 | done | Integration | Add CI markdown summary and run artifact design |
 | T17 | #17 | done | Integration | Implement deterministic CI summary and artifact renderers |
 | T18 | #18 | done | Release | Add local release dry-run guide and command checklist |
-| T19 | #19 | pending | Release | Add CI and domain verification record |
+| T19 | #19 | done | Release | Add CI and domain verification record |
 | T20 | #20 | pending | Planning | Seed next roadmap tasks after M0 readiness |
