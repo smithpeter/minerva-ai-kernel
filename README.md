@@ -127,6 +127,20 @@ Before a public release, collect repeatable GitHub Actions and
 python3 scripts/check-release-readiness.py --content-reviewed "Verified public Minerva page"
 ```
 
+For local offline editable-install readiness without network access, run:
+
+```bash
+python3 scripts/check-release-readiness.py --skip-external --install-backend current
+python3 scripts/check-release-readiness.py --skip-external --install-backend fresh-venv
+```
+
+The `local_install_backend` check reports whether `setuptools.build_meta` is
+importable in the target interpreter or in a fresh virtualenv created from it.
+`pass` means the documented `--no-build-isolation -e .` install has a local
+build backend available. `fail` means use a local interpreter or venv that
+already includes the backend, or seed it from an approved local wheel/cache
+before rerunning; the readiness checker does not download dependencies.
+
 ## Local AI Team
 
 Minerva has a local task board in `.tasks/` and a scoped agent loop:

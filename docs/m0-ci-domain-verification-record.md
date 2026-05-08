@@ -15,8 +15,10 @@ python3 scripts/check-release-readiness.py --content-reviewed "Verified public M
 
 The script checks the local commit, attempts to read GitHub Actions status for
 that commit through an existing `gh` session, and checks DNS, TLS, and HTTPS
-reachability for `minervakernel.com`. It does not mutate DNS, deploy a site,
-create credentials, print environment dumps, or print response bodies.
+reachability for `minervakernel.com`. It also probes the local
+`setuptools.build_meta` build backend needed by the documented offline editable
+install path. It does not mutate DNS, deploy a site, create credentials, print
+environment dumps, print response bodies, or download dependencies.
 
 ## Verified Facts From Local Checkout
 
@@ -30,7 +32,8 @@ credentials.
 | Local compile gate passes. | `python3 -m compileall minerva_kernel` | Command exits 0. |
 | Local unit gate passes. | `python3 -m unittest discover -s tests` | Command exits 0 and reports `OK`. |
 | Local eval smoke gate is available for release readiness. | `python3 -m minerva_kernel.eval_smoke` | Command exits 0 and reports all smoke cases passed. |
-| Repeatable readiness checker is available. | `python3 scripts/check-release-readiness.py --skip-external` | Local checkout metadata is reported and external checks are marked `skipped`. |
+| Repeatable readiness checker is available. | `python3 scripts/check-release-readiness.py --skip-external` | Local checkout metadata and current-interpreter install-backend status are reported; external checks are marked `skipped`. |
+| Fresh venv has the offline editable-install backend. | `python3 scripts/check-release-readiness.py --skip-external --install-backend fresh-venv` | `local_install_backend` is `pass`, or a setup blocker is recorded before the install dry run. |
 | Public docs can be searched for launch blockers. | `rg -n "auto[- ]?repair|replace CI|full AIOps|credential|secret|API key" README.md docs examples` | Any match is reviewed in context before announcement. |
 
 Local verification is necessary but not sufficient for release. The release
@@ -66,6 +69,12 @@ Local-only dry run, useful when network or repository access is unavailable:
 python3 scripts/check-release-readiness.py --skip-external
 ```
 
+Fresh-venv install-backend dry run:
+
+```bash
+python3 scripts/check-release-readiness.py --skip-external --install-backend fresh-venv
+```
+
 The checker output is bounded for public issue comments. It reports statuses as
 `pass`, `fail`, `unverified`, `manual`, or `skipped`; omits local full paths,
 tokens, response bodies, and environment dumps; and exits non-zero when an
@@ -78,8 +87,20 @@ What the checker verifies locally:
 
 - Repository root basename, current commit SHA, current branch, and repository
   slug.
+- Whether `setuptools.build_meta` is importable in the selected target
+  interpreter, or in a fresh venv when `--install-backend fresh-venv` is used.
 - Whether the repeatable process can run without external access by using
   `--skip-external`.
+
+Interpret `local_install_backend` as follows:
+
+- `pass`: the selected local target has the build backend needed for
+  `python -m pip install --no-index --no-deps --no-build-isolation -e .`.
+- `fail`: use a local interpreter or venv that already provides
+  `setuptools.build_meta`, or seed it from an approved local wheel/cache before
+  rerunning; do not download dependencies during this readiness check.
+- `skipped`: the install-backend check was intentionally omitted and separate
+  evidence is required before relying on the offline editable install path.
 
 What requires external permissions or network availability:
 

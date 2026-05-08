@@ -24,8 +24,10 @@ commit those dry-run artifacts.
 ```bash
 git clone https://github.com/smithpeter/minerva-ai-kernel.git
 cd minerva-ai-kernel
+python3 scripts/check-release-readiness.py --skip-external --install-backend fresh-venv
 python3 -m venv .venv
 . .venv/bin/activate
+python3 scripts/check-release-readiness.py --skip-external --install-backend current
 python3 -m pip install --no-index --no-deps --no-build-isolation -e .
 ```
 
@@ -38,8 +40,10 @@ Expected result:
 - Local artifact: `.venv/`.
 - No remote LLM, cloud account, publish token, or deployment target is required.
 - Because this command disables build isolation, the fresh virtualenv must
-  already provide the local build backend. If an interpreter's virtualenv does
-  not seed `setuptools`, record that setup failure and rerun with a supported
+  already provide the local build backend. The readiness command above reports
+  `local_install_backend pass` for both the fresh-venv seed check and the
+  activated target interpreter only when `setuptools.build_meta` is importable.
+  If either check fails, record that setup failure and rerun with a supported
   local interpreter or venv seed without downloading dependencies.
 
 ## 2. Doctor Check

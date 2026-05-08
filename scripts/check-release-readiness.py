@@ -12,6 +12,7 @@ import socket
 import ssl
 import subprocess
 import sys
+import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -25,6 +26,7 @@ DEFAULT_REPO = "smithpeter/minerva-ai-kernel"
 MAX_DETAIL_CHARS = 220
 MAX_DETAILS_PER_CHECK = 8
 MAX_LIST_ITEMS = 5
+INSTALL_BACKEND_CHECKS = ("current", "fresh-venv", "skip")
 
 SECRET_PATTERNS = (
     re.compile(r"gh[pousr]_[A-Za-z0-9_]{20,}"),
@@ -32,6 +34,27 @@ SECRET_PATTERNS = (
     re.compile(r"(?i)\b(token|secret|password|api[_-]?key)=\S+"),
     re.compile(r"(?i)\b(authorization:\s*bearer\s+)\S+"),
 )
+
+BUILD_BACKEND_PROBE = """
+import json
+import sys
+
+payload = {"python_version": sys.version.split()[0]}
+try:
+    import setuptools.build_meta
+except Exception as exc:
+    payload.update(
+        {
+            "importable": False,
+            "error": type(exc).__name__,
+            "message": str(exc).splitlines()[0] if str(exc) else "",
+        }
+    )
+else:
+    payload["importable"] = True
+
+print(json.dumps(payload, sort_keys=True))
+"""
 
 
 @dataclass(frozen=True)
@@ -88,6 +111,11 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     results = [
         local,
+        check_install_backend(
+            mode=args.install_backend,
+            python=args.install_backend_python,
+            timeout=timeout,
+        ),
         check_github_actions(
             repo=context["repository"],
             commit=context["commit"],
@@ -150,6 +178,26 @@ def parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
         help=(
             "Release-owner note confirming the HTTPS page is the intended "
             "public Minerva surface."
+        ),
+    )
+    parser.add_argument(
+        "--install-backend",
+        choices=INSTALL_BACKEND_CHECKS,
+        default="current",
+        help=(
+            "Check the offline editable-install build backend in the current "
+            "target interpreter, in a fresh venv, or skip the local install "
+            "backend check. Defaults to current."
+        ),
+    )
+    parser.add_argument(
+        "--install-backend-python",
+        default=sys.executable,
+        metavar="PYTHON",
+        help=(
+            "Python executable to probe for --install-backend current or to "
+            "use when creating the fresh venv. Defaults to this script's "
+            "interpreter."
         ),
     )
     return parser.parse_args(argv)
@@ -259,6 +307,166 @@ def check_github_actions(
 
     runs = payload.get("workflow_runs", [])
     return github_actions_result_from_runs(runs, commit=commit)
+
+
+def check_install_backend(
+    *, mode: str, python: str, timeout: float
+) -> CheckResult:
+    if mode == "skip":
+        return result(
+            "local_install_backend",
+            "skipped",
+            "not run",
+            "offline editable install build backend",
+            [
+                "skipped by --install-backend skip",
+                (
+                    "next_action=run with --install-backend current or "
+                    "--install-backend fresh-venv before relying on offline "
+                    "editable install"
+                ),
+            ],
+        )
+    if mode == "fresh-venv":
+        return check_install_backend_in_fresh_venv(python=python, timeout=timeout)
+    return install_backend_result_from_probe(
+        run_backend_probe(python, timeout=timeout),
+        mode="current",
+    )
+
+
+def check_install_backend_in_fresh_venv(
+    *, python: str, timeout: float
+) -> CheckResult:
+    with tempfile.TemporaryDirectory(prefix="minerva-install-backend-") as tmp:
+        venv_dir = Path(tmp) / "venv"
+        created = run_command((python, "-m", "venv", str(venv_dir)), timeout=timeout)
+        if created.returncode != 0:
+            return result(
+                "local_install_backend",
+                "fail",
+                "python -m venv",
+                "fresh venv seeded with setuptools.build_meta",
+                [
+                    "mode=fresh-venv",
+                    "fresh_venv_created=no",
+                    command_error("python -m venv", created)
+                    or "python -m venv did not complete",
+                    install_backend_failure_next_action(),
+                ],
+            )
+        venv_python = venv_dir / (
+            "Scripts/python.exe" if os.name == "nt" else "bin/python"
+        )
+        if not venv_python.exists():
+            return result(
+                "local_install_backend",
+                "fail",
+                "python -m venv",
+                "fresh venv seeded with setuptools.build_meta",
+                [
+                    "mode=fresh-venv",
+                    "fresh_venv_created=yes",
+                    "venv python executable was not created",
+                    install_backend_failure_next_action(),
+                ],
+            )
+        probe = run_backend_probe(str(venv_python), timeout=timeout)
+    return install_backend_result_from_probe(probe, mode="fresh-venv")
+
+
+def run_backend_probe(
+    python: str, *, timeout: float
+) -> subprocess.CompletedProcess[str]:
+    return run_command((python, "-c", BUILD_BACKEND_PROBE), timeout=timeout)
+
+
+def install_backend_result_from_probe(
+    probe: subprocess.CompletedProcess[str], *, mode: str
+) -> CheckResult:
+    details = [f"mode={mode}"]
+    if probe.returncode != 0:
+        return result(
+            "local_install_backend",
+            "fail",
+            "Python import probe",
+            install_backend_requires(mode),
+            [
+                *details,
+                "setuptools.build_meta_importable=no",
+                command_error("python import setuptools.build_meta", probe)
+                or "Python import probe did not complete",
+                install_backend_failure_next_action(),
+            ],
+        )
+
+    try:
+        payload = json.loads(probe.stdout)
+    except json.JSONDecodeError:
+        return result(
+            "local_install_backend",
+            "fail",
+            "Python import probe",
+            install_backend_requires(mode),
+            [
+                *details,
+                "setuptools.build_meta_importable=no",
+                "Python import probe did not return JSON",
+                install_backend_failure_next_action(),
+            ],
+        )
+
+    version = str(payload.get("python_version") or "").strip()
+    if version:
+        details.append(f"python_version={version}")
+    importable = payload.get("importable") is True
+    details.append(
+        "setuptools.build_meta_importable=" + ("yes" if importable else "no")
+    )
+    if importable:
+        details.append(
+            (
+                "next_action=offline editable install can use "
+                "--no-build-isolation with this local build backend available"
+            )
+        )
+        return result(
+            "local_install_backend",
+            "pass",
+            "Python import probe",
+            install_backend_requires(mode),
+            details,
+        )
+
+    error = str(payload.get("error") or "").strip()
+    message = str(payload.get("message") or "").strip()
+    if error:
+        details.append(f"error={error}")
+    if message:
+        details.append(f"message={message}")
+    details.append(install_backend_failure_next_action())
+    return result(
+        "local_install_backend",
+        "fail",
+        "Python import probe",
+        install_backend_requires(mode),
+        details,
+    )
+
+
+def install_backend_requires(mode: str) -> str:
+    if mode == "fresh-venv":
+        return "fresh venv seeded with setuptools.build_meta"
+    return "target Python with setuptools.build_meta available"
+
+
+def install_backend_failure_next_action() -> str:
+    return (
+        "next_action=use a local interpreter or venv that already provides "
+        "setuptools.build_meta, or seed setuptools from an approved local "
+        "wheel/cache before rerunning; do not download dependencies during "
+        "this readiness check"
+    )
 
 
 def github_actions_result_from_runs(
@@ -548,6 +756,13 @@ def run_command(
             124,
             stdout=bounded_text(exc.stdout or ""),
             stderr=f"timeout after {timeout:g}s",
+        )
+    except OSError as exc:
+        return subprocess.CompletedProcess(
+            list(args),
+            127,
+            stdout="",
+            stderr=f"{type(exc).__name__}: {bounded_text(str(exc))}",
         )
 
 

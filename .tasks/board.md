@@ -42,4 +42,4 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T34 | #34 | done | Eval / Research | Define local CPU model candidate registry and eval scoring contract |
 | T35 | #35 | done | Release / Integration | Fix package metadata so editable install exposes minerva CLI |
 | T36 | #36 | done | Release | Rerun full local release dry-run after package metadata fix |
-| T37 | #37 | pending | Release / Integration | Add local install environment readiness check |
+| T37 | #37 | done | Release / Integration | Add local install environment readiness check |

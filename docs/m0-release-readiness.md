@@ -68,9 +68,28 @@ python3 scripts/check-release-readiness.py --content-reviewed "Verified public M
 
 The script reports local checkout metadata, checks GitHub Actions for the
 current commit when `gh` and network access are available, checks DNS/TLS/HTTPS
-for `minervakernel.com`, and keeps output bounded for public issue comments. Use
+for `minervakernel.com`, checks that the local offline editable-install build
+backend is importable, and keeps output bounded for public issue comments. Use
 `python3 scripts/check-release-readiness.py --skip-external` to verify the local
-reporting path when external access is unavailable.
+checkout and current-interpreter install-backend path when external access is
+unavailable.
+
+To test the fresh-virtualenv prerequisite for the documented offline editable
+install path without network access, run:
+
+```bash
+python3 scripts/check-release-readiness.py --skip-external --install-backend fresh-venv
+```
+
+The `local_install_backend` check passes only when `setuptools.build_meta` is
+importable in the selected target. A failure means the interpreter or freshly
+created venv does not have the local build backend required by
+`python -m pip install --no-index --no-deps --no-build-isolation -e .`. The next
+action is to use a local interpreter or venv that already includes
+`setuptools.build_meta`, or seed it from an approved local wheel/cache before
+rerunning; do not download dependencies as part of this readiness check. A
+`skipped` status is acceptable only when separate install-backend evidence is
+recorded.
 
 The public release decision must record the exact command output or CI links for
 the release branch. A passing local run is necessary but not enough if remote CI
@@ -102,7 +121,8 @@ Remaining risks:
 - Domain resolution, TLS, and final public destination for `minervakernel.com` must be verified outside this local checkout.
 - The no-build-isolation editable install path requires the fresh virtualenv to
   already include the local build backend; Python 3.14 and Python 3.13 venvs on
-  the T36 host did not seed `setuptools`.
+  the T36 host did not seed `setuptools`. The readiness checker now reports
+  this as `local_install_backend` for the current interpreter or a fresh venv.
 - The smoke eval is a narrow wiring signal, not a benchmark or production reliability claim.
 - Redaction v0 is a basic safety layer, not a full DLP system.
 - M0 behavior without a local model provider intentionally demonstrates policy-blocked escalation rather than remote fallback.

@@ -53,6 +53,10 @@ save local evidence for review and evaluation.
   DNS, TLS, HTTPS content, and launch-blocker review.
 - Added `scripts/check-release-readiness.py` for repeatable, bounded GitHub
   Actions and `minervakernel.com` DNS/TLS/HTTPS readiness evidence.
+- Extended the release readiness checker with a no-download
+  `local_install_backend` probe for `setuptools.build_meta` in the current
+  interpreter or a fresh venv, so offline editable-install setup gaps are
+  reported before `pip install --no-build-isolation -e .` fails.
 - Recorded full local release dry-run evidence for commit
   `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7`, including install/smoke,
   `doctor`, `observe`, run-record inspection, `policy-check`, eval smoke,

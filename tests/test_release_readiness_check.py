@@ -28,7 +28,13 @@ class ReleaseReadinessCheckTests(unittest.TestCase):
 
     def test_skip_external_mode_is_local_and_public_safe(self) -> None:
         completed = subprocess.run(
-            [sys.executable, str(SCRIPT), "--skip-external"],
+            [
+                sys.executable,
+                str(SCRIPT),
+                "--skip-external",
+                "--install-backend",
+                "skip",
+            ],
             cwd=ROOT,
             text=True,
             capture_output=True,
@@ -38,6 +44,7 @@ class ReleaseReadinessCheckTests(unittest.TestCase):
 
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertIn("[local_checkout] pass", completed.stdout)
+        self.assertIn("[local_install_backend] skipped", completed.stdout)
         self.assertIn("[github_actions] skipped", completed.stdout)
         self.assertIn("[domain_dns] skipped", completed.stdout)
         self.assertIn("overall=pass", completed.stdout)
@@ -88,6 +95,68 @@ class ReleaseReadinessCheckTests(unittest.TestCase):
         self.assertEqual(result.status, "fail")
         self.assertEqual(self.checker.readiness_exit_code([result]), 1)
         self.assertIn("all returned runs must be completed", "\n".join(result.details))
+
+    def test_install_backend_result_passes_when_build_meta_imports(self) -> None:
+        result = self.checker.install_backend_result_from_probe(
+            subprocess.CompletedProcess(
+                ["python", "-c", "probe"],
+                0,
+                stdout='{"importable": true, "python_version": "3.11.9"}',
+                stderr="",
+            ),
+            mode="current",
+        )
+
+        self.assertEqual(result.status, "pass")
+        self.assertEqual(self.checker.readiness_exit_code([result]), 0)
+        self.assertIn("setuptools.build_meta_importable=yes", result.details)
+        self.assertIn(
+            (
+                "next_action=offline editable install can use "
+                "--no-build-isolation with this local build backend available"
+            ),
+            result.details,
+        )
+
+    def test_install_backend_result_fails_when_build_meta_is_missing(self) -> None:
+        result = self.checker.install_backend_result_from_probe(
+            subprocess.CompletedProcess(
+                ["python", "-c", "probe"],
+                0,
+                stdout=(
+                    '{"error": "ModuleNotFoundError", "importable": false, '
+                    '"message": "No module named setuptools", '
+                    '"python_version": "3.14.0"}'
+                ),
+                stderr="",
+            ),
+            mode="fresh-venv",
+        )
+
+        self.assertEqual(result.status, "fail")
+        self.assertEqual(self.checker.readiness_exit_code([result]), 1)
+        self.assertIn("setuptools.build_meta_importable=no", result.details)
+        self.assertIn("error=ModuleNotFoundError", result.details)
+        self.assertIn(
+            (
+                "next_action=use a local interpreter or venv that already "
+                "provides setuptools.build_meta, or seed setuptools from an "
+                "approved local wheel/cache before rerunning; do not download "
+                "dependencies during this readiness check"
+            ),
+            result.details,
+        )
+
+    def test_install_backend_check_can_be_skipped(self) -> None:
+        result = self.checker.check_install_backend(
+            mode="skip",
+            python=sys.executable,
+            timeout=1.0,
+        )
+
+        self.assertEqual(result.status, "skipped")
+        self.assertEqual(self.checker.readiness_exit_code([result]), 0)
+        self.assertIn("skipped by --install-backend skip", result.details)
 
 
 if __name__ == "__main__":
