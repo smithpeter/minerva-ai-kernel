@@ -6,6 +6,10 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from .ci_render import (
+    render_ci_artifact_json_from_file,
+    render_markdown_summary_from_file,
+)
 from .observe import DEFAULT_TIMEOUT_SECONDS, observe_command, save_run_record
 from .planner import build_prompt
 from .policy import validate_action, validate_payload
@@ -63,6 +67,20 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
         "policy-check", help="Validate a decision JSON file against policy."
     )
     policy_check.add_argument("path")
+    ci_summary = subparsers.add_parser(
+        "render-ci-summary",
+        help="Render a GitHub Actions markdown summary from a local run.v0 file.",
+    )
+    ci_summary.add_argument("path")
+    ci_artifact = subparsers.add_parser(
+        "render-ci-artifact",
+        help="Render a minerva_ci_run.v0 JSON artifact from a local run.v0 file.",
+    )
+    ci_artifact.add_argument(
+        "--created-at",
+        help="Override the artifact created_at timestamp for reproducible fixtures.",
+    )
+    ci_artifact.add_argument("path")
     args = parser.parse_args(argv)
 
     if args.command == "doctor":
@@ -109,6 +127,28 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
         print(f"Policy decision: {status}")
         print(f"Reason: {decision.reason}")
         raise SystemExit(0 if decision.allowed else 2)
+
+    if args.command == "render-ci-summary":
+        try:
+            print(render_markdown_summary_from_file(args.path), end="")
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            print(f"Render CI summary failed: {exc}", file=sys.stderr)
+            raise SystemExit(1) from exc
+        return
+
+    if args.command == "render-ci-artifact":
+        try:
+            print(
+                render_ci_artifact_json_from_file(
+                    args.path,
+                    created_at=args.created_at,
+                ),
+                end="",
+            )
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            print(f"Render CI artifact failed: {exc}", file=sys.stderr)
+            raise SystemExit(1) from exc
+        return
 
     parser.print_help()
 

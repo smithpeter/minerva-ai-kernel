@@ -47,22 +47,28 @@ jobs:
             exit "$minerva_status"
           fi
 
-          python3 scripts/render-minerva-summary.py "$run_record" \
-            >> "$GITHUB_STEP_SUMMARY"
-          python3 scripts/render-minerva-artifact.py "$run_record" \
-            > minerva-ci-run.json
+          minerva render-ci-summary "$run_record" >> "$GITHUB_STEP_SUMMARY"
+          minerva render-ci-artifact "$run_record" > minerva-ci-run.json
 
           observed_status="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["observation"]["exit_code"])' "$run_record")"
           exit "$observed_status"
 ```
 
+Renderer usage:
+
+```bash
+minerva render-ci-summary .minerva/runs/<run-record>.json
+minerva render-ci-artifact .minerva/runs/<run-record>.json > minerva-ci-run.json
+```
+
+The renderers are local and deterministic for a fixed run record and GitHub
+Actions environment. They do not call the GitHub API, do not upload artifacts,
+and re-apply Minerva redaction before writing markdown or JSON output. Static
+examples live in [minerva-ci-summary.md](../examples/minerva-ci-summary.md) and
+[minerva-ci-run-artifact.json](../examples/minerva-ci-run-artifact.json).
+
 Notes:
 
-- The renderer script names are placeholders for the next implementation step.
-  Static examples live in [minerva-ci-summary.md](../examples/minerva-ci-summary.md)
-  and [minerva-ci-run-artifact.json](../examples/minerva-ci-run-artifact.json).
-- Until a first-class renderer exists, the CI workflow can attach or print the
-  raw `.minerva/runs/*.json` record produced by `minerva observe --`.
 - The shell exits with the observed command exit code so Minerva cannot mask a
   failing test command.
 - Artifact upload is optional and not required for the design. If enabled later,
