@@ -21,7 +21,7 @@ jobs:
       - name: Compile package
         run: python -m compileall minerva_kernel
 
-      - name: Run unit tests
+      - name: Run unit and install entry smoke tests
         run: python -m unittest discover -s tests
 
       - name: Run evaluation smoke test

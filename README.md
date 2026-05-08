@@ -23,6 +23,21 @@ AI Reliability Kernel
 Runtime State Interpreter
 ```
 
+## Quickstart
+
+From a local checkout:
+
+```bash
+python3 -m pip install --no-deps .
+minerva doctor
+minerva observe -- python3 -c "import sys; print('example failure', file=sys.stderr); sys.exit(1)"
+python -m minerva_kernel.eval_smoke
+```
+
+`minerva observe --` saves a run record under `.minerva/runs/`. If no local
+OpenAI-compatible provider is running, Minerva still captures the command output
+and policy-blocks escalation instead of requiring a remote LLM.
+
 ## First Milestone
 
 M0: Local Failure Interpreter
