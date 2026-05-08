@@ -103,7 +103,9 @@ bash scripts/ai-team-tick.sh
 
 The tick includes an autopilot finalizer. When a worker marks a task card
 `done`, the finalizer runs boundary checks, contamination checks, compile/tests,
-commits, pushes, and tries to update the linked GitHub issue.
+commits, pushes, and tries to update the linked GitHub issue. A single tick can
+chain multiple pending tasks until the queue is empty or
+`MINERVA_AI_MAX_TASKS_PER_TICK` is reached.
 
 To install a macOS `launchd` job that runs one tick every 30 minutes:
 
