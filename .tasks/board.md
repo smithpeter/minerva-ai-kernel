@@ -43,3 +43,4 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T35 | #35 | done | Release / Integration | Fix package metadata so editable install exposes minerva CLI |
 | T36 | #36 | done | Release | Rerun full local release dry-run after package metadata fix |
 | T37 | #37 | done | Release / Integration | Add local install environment readiness check |
+| T38 | #38 | pending | Release / Integration | Auto-discover local Python candidates for install backend readiness |
