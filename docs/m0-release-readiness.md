@@ -15,11 +15,11 @@ the failure state, policy-checks a bounded decision, and saves a local run recor
 
 | Area | Go Criterion | Current Status | Evidence |
 | --- | --- | --- | --- |
-| CLI | `minerva observe -- <command>` captures command, cwd, stdout/stderr tails, exit code, duration, runtime metadata, decision, policy result, and saved run record. | Ready for local release verification. | README quickstart and [M0 demo script](../examples/m0-demo-script.md). |
-| CLI | `minerva diagnose failure.json` can read an observation-shaped input and produce a structured decision. | Ready for local release verification. | [Decision Schema v0](decision-schema-v0.md) and issue tracker scope. |
-| Tests | `python3 -m compileall minerva_kernel` passes from a clean checkout. | Passed locally for this snapshot. Rerun on the release commit. | `Listing 'minerva_kernel'...` |
-| Tests | `python3 -m unittest discover -s tests` passes from a clean checkout. | Passed locally for this snapshot. Rerun on the release commit. | 50 tests ran, OK. |
-| Eval | `python3 -m minerva_kernel.eval_smoke` passes and reports the expected deterministic M0 fixture result. | Passed locally for this snapshot. Rerun on the release commit. | 5/5 smoke cases passed, 0 failed. |
+| CLI | `minerva observe -- <command>` captures command, cwd, stdout/stderr tails, exit code, duration, runtime metadata, decision, policy result, and saved run record. | Module entry path verified locally; editable install currently blocks the documented `minerva` console command. | README quickstart, [M0 demo script](../examples/m0-demo-script.md), and [local release dry-run evidence](../.minerva/release-evidence/2026-05-08-local-release-dry-run.md). |
+| CLI | `minerva diagnose failure.json` can read an observation-shaped input and produce a structured decision. | Module entry path remains ready for local verification; console command path depends on fixing editable install. | [Decision Schema v0](decision-schema-v0.md), issue tracker scope, and [local release dry-run evidence](../.minerva/release-evidence/2026-05-08-local-release-dry-run.md). |
+| Tests | `python3 -m compileall minerva_kernel` passes from a clean checkout. | Passed locally for commit `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7` on 2026-05-08. | [Local release dry-run evidence](../.minerva/release-evidence/2026-05-08-local-release-dry-run.md). |
+| Tests | `python3 -m unittest discover -s tests` passes from a clean checkout. | Passed locally for commit `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7` on 2026-05-08. | 77 tests ran, OK; [local release dry-run evidence](../.minerva/release-evidence/2026-05-08-local-release-dry-run.md). |
+| Eval | `python3 -m minerva_kernel.eval_smoke` passes and reports the expected deterministic M0 fixture result. | Passed locally for commit `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7` on 2026-05-08. | 5/5 smoke cases passed, 0 failed; [local release dry-run evidence](../.minerva/release-evidence/2026-05-08-local-release-dry-run.md). |
 | Security Boundaries | Default policy is read-only and fails closed on write tools, shell tools, destructive commands, credential access, unknown action labels, low confidence, higher risk, and escalation requests. | Documented as the M0 safety boundary. Must remain covered by tests. | [M0 launch draft](m0-launch-blog-post.md) and [Decision Schema v0](decision-schema-v0.md). |
 | Redaction | Known sensitive values are redacted before model input and before saved observations, decisions, or run records are written. | Documented and represented in demo/eval expectations. Must remain covered by tests. | [Observation Schema v0](observation-schema-v0.md), [Decision Schema v0](decision-schema-v0.md), and [Failure case guide](failure-case-contributions.md). |
 | CI | GitHub Actions compile/test/eval smoke gate is green on the release branch or announcement commit. | Not verified by this local document. | README CI gate and [M0 CI and domain verification record](m0-ci-domain-verification-record.md); remote CI must be checked before go. |
@@ -42,6 +42,14 @@ Use the [M0 local release dry-run guide](m0-local-release-dry-run.md) for the
 full clean-checkout command sequence, expected artifacts, run record inspection,
 and safety checks.
 
+Latest local evidence for commit `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7`:
+[2026-05-08 local release dry-run evidence](../.minerva/release-evidence/2026-05-08-local-release-dry-run.md).
+It records passing compile, unit tests, eval smoke, run-record inspection,
+policy checks, and redaction checks. It also records an install blocker:
+editable install currently fails package metadata discovery, so the `minerva`
+console script was unavailable and CLI checks used the module entry point from
+the checkout.
+
 Use the [M0 CI and domain verification record](m0-ci-domain-verification-record.md)
 to record the remote GitHub Actions status, `minervakernel.com` DNS and TLS
 target, HTTPS content check, and launch-blocker review without adding secrets to
@@ -63,12 +71,15 @@ Completed or ready for release verification:
 - Redaction expectations are documented for observations, decisions, run records, and contributed failure cases.
 - Launch and demo drafts explain the narrow M0 claim and non-claims.
 - CI expectations are documented in README.
-- T15 local verification passed: `compileall`, 50 unit tests, and eval smoke
-  5/5.
+- T31 local verification passed: `compileall`, 77 unit tests, eval smoke 5/5,
+  run-record inspection, policy checks, and redaction checks for commit
+  `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7`.
 
 Remaining risks:
 
 - The release decision still needs a fresh local compile/test run and eval smoke output if the release commit changes after this snapshot.
+- Editable package install must be fixed so the documented `minerva` console
+  command path works from a fresh virtualenv.
 - Remote GitHub Actions status is not captured in this document and must be green before announcement.
 - Domain resolution, TLS, and final public destination for `minervakernel.com` must be verified outside this local checkout.
 - The smoke eval is a narrow wiring signal, not a benchmark or production reliability claim.
@@ -80,6 +91,8 @@ Launch blockers:
 - Any failing compile, unit test, or eval smoke command on the release commit.
 - Any policy path that allows destructive commands, arbitrary model-generated shell execution, credential access, or unsafe escalation by default.
 - Any demo step that requires a remote LLM for the minimum M0 path.
+- Any package metadata issue that prevents the documented local install path
+  from exposing the `minerva` console command.
 - Any public doc that implies M0 auto-repairs systems, replaces CI/monitoring, or is a full AIOps platform.
 - Any unredacted secret, credential, private log, full environment dump, or proprietary data in docs, examples, fixtures, or release materials.
 - Missing or broken public domain target for `minervakernel.com`.

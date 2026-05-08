@@ -48,6 +48,10 @@ save local evidence for review and evaluation.
 - Added a CI and domain verification record that separates facts observable
   from a local checkout from release-owner confirmations for GitHub Actions,
   DNS, TLS, HTTPS content, and launch-blocker review.
+- Recorded full local release dry-run evidence for commit
+  `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7`, including install/smoke,
+  `doctor`, `observe`, run-record inspection, `policy-check`, eval smoke,
+  compile, unit tests, redaction, and policy-blocking evidence.
 - Added M1 roadmap task seeds for CI renderers, integration examples, local
   model path, eval growth, and ecosystem documentation.
 - Added deterministic CI renderer contracts for a GitHub Actions markdown
@@ -90,6 +94,7 @@ save local evidence for review and evaluation.
 
 - [M0 release readiness checklist](docs/m0-release-readiness.md)
 - [M0 local release dry-run guide](docs/m0-local-release-dry-run.md)
+- [2026-05-08 local release dry-run evidence](.minerva/release-evidence/2026-05-08-local-release-dry-run.md)
 - [M0 CI and domain verification record](docs/m0-ci-domain-verification-record.md)
 - [M1 eval report](evals/m1_eval_report.md)
 - [Ecosystem contribution guide](docs/ecosystem-contributions.md)
@@ -99,8 +104,9 @@ save local evidence for review and evaluation.
 
 ### Next Tasks
 
-- Run the full local release dry run on the exact release commit and record the
-  exact command outputs.
+- Fix the package metadata blocker from the local release dry run so editable
+  install exposes the documented `minerva` console command from a fresh
+  virtualenv.
 - Confirm the GitHub Actions compile/test/eval gate is green for the exact
   release branch or announcement commit.
 - Verify `minervakernel.com` DNS, TLS, and HTTPS content before any public

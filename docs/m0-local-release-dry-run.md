@@ -289,3 +289,8 @@ Record these values in the release decision or PR before marking M0 ready:
 - Exact outputs or CI links for compile, unit tests, and eval smoke.
 - Confirmation that no release was published, no hosted service was deployed,
   and no remote LLM was required for the minimum M0 path.
+
+## Recorded Evidence
+
+- [2026-05-08 local release dry-run evidence](../.minerva/release-evidence/2026-05-08-local-release-dry-run.md)
+  for commit `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7`.
