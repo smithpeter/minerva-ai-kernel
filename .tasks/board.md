@@ -17,4 +17,4 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T9 | #7 | done | Eval | Add first labeled failure-case corpus slice |
 | T10 | #10 | done | Integration | Add GitHub Actions CI smoke workflow |
 | T11 | #11 | done | Growth | Draft failure case contribution guide |
-| T12 | #12 | pending | Growth | Draft M0 launch blog post and demo script |
+| T12 | #12 | done | Growth | Draft M0 launch blog post and demo script |

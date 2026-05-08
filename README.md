@@ -63,6 +63,8 @@ LLM interprets. Policy authorizes. Executor acts.
 
 Start here:
 
+- [M0 launch blog post draft](docs/m0-launch-blog-post.md)
+- [M0 demo script](examples/m0-demo-script.md)
 - [Product strategy](docs/product-strategy.md)
 - [Questions and requirements](docs/questions-and-requirements.md)
 - [Execution plan and founder role](docs/execution-plan-and-founder-role.md)
