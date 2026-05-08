@@ -33,6 +33,35 @@ Run it without network access:
 python3 -m minerva_kernel.eval_smoke
 ```
 
+## CPU Model Eval Harness v0
+
+The first local-model eval harness lives in `minerva_kernel.cpu_model_eval` and
+defaults to `evals/cpu_model_cases.jsonl`. The default path is deterministic:
+it evaluates checked-in fixture decisions and can also be driven by
+`MockModelProvider` in tests, so it does not require Ollama, GPU access,
+network access, model weights, or package installation.
+
+Run it without a real model:
+
+```bash
+python3 -m minerva_kernel.cpu_model_eval
+```
+
+The JSON report uses the CPU model eval report shape from
+`docs/sub-500m-cpu-model-plan.md`, including:
+
+- `minerva.cpu_model_eval_report.v0` schema version.
+- candidate and minimum-path metadata.
+- corpus case mix.
+- JSON validity, dangerous action rate, escalation quality, safe recovery
+  decision rate, and latency fields.
+- per-case result fields for validity, failure, action, policy decision,
+  dangerous action detection, escalation, safe recovery, latency, and notes.
+
+Real Ollama or local GGUF execution is a later plug-in path: wire a local
+provider into this harness only after the fixture and mock-provider path stays
+green. The minimum eval path must continue to run offline.
+
 ## M0 Failure Corpus Slice
 
 The first labeled M0 slice lives in `evals/failure_cases_m0_slice.json`.
