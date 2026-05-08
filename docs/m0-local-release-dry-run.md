@@ -24,8 +24,10 @@ commit those dry-run artifacts.
 ```bash
 git clone https://github.com/smithpeter/minerva-ai-kernel.git
 cd minerva-ai-kernel
-python3 scripts/check-release-readiness.py --skip-external --install-backend fresh-venv
-python3 -m venv .venv
+python3 scripts/check-release-readiness.py --skip-external --install-backend auto
+PYTHON=python3  # use the selected_candidate reported by auto mode
+python3 scripts/check-release-readiness.py --skip-external --install-backend fresh-venv --install-backend-python "$PYTHON"
+"$PYTHON" -m venv .venv
 . .venv/bin/activate
 python3 scripts/check-release-readiness.py --skip-external --install-backend current
 python3 -m pip install --no-index --no-deps --no-build-isolation -e .
@@ -40,11 +42,13 @@ Expected result:
 - Local artifact: `.venv/`.
 - No remote LLM, cloud account, publish token, or deployment target is required.
 - Because this command disables build isolation, the fresh virtualenv must
-  already provide the local build backend. The readiness command above reports
-  `local_install_backend pass` for both the fresh-venv seed check and the
-  activated target interpreter only when `setuptools.build_meta` is importable.
-  If either check fails, record that setup failure and rerun with a supported
-  local interpreter or venv seed without downloading dependencies.
+  already provide the local build backend. The auto-discovery readiness command
+  reports the first local Python candidate that can import
+  `setuptools.build_meta`; use that candidate for the fresh-venv seed check and
+  the venv creation step. The activated target interpreter check passes only
+  when `setuptools.build_meta` is importable. If any check fails, record that
+  setup failure and rerun with a supported local interpreter or venv seed
+  without downloading dependencies.
 
 ## 2. Doctor Check
 

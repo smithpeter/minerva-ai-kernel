@@ -158,6 +158,124 @@ class ReleaseReadinessCheckTests(unittest.TestCase):
         self.assertEqual(self.checker.readiness_exit_code([result]), 0)
         self.assertIn("skipped by --install-backend skip", result.details)
 
+    def test_install_backend_auto_selects_first_passing_candidate(self) -> None:
+        candidates = (
+            self.checker.PythonCandidate("python-old", "/fake/python-old"),
+            self.checker.PythonCandidate("python-good", "/fake/python-good"),
+            self.checker.PythonCandidate("python-later", "/fake/python-later"),
+        )
+        probes = {
+            "/fake/python-old": subprocess.CompletedProcess(
+                ["python-old", "-c", "probe"],
+                0,
+                stdout=(
+                    '{"error": "ModuleNotFoundError", "importable": false, '
+                    '"message": "No module named setuptools", '
+                    '"python_version": "3.14.0"}'
+                ),
+                stderr="",
+            ),
+            "/fake/python-good": subprocess.CompletedProcess(
+                ["python-good", "-c", "probe"],
+                0,
+                stdout='{"importable": true, "python_version": "3.11.9"}',
+                stderr="",
+            ),
+        }
+        calls: list[str] = []
+
+        def probe_runner(
+            python: str, *, timeout: float
+        ) -> subprocess.CompletedProcess[str]:
+            calls.append(python)
+            return probes[python]
+
+        result = self.checker.check_install_backend_auto(
+            python=None,
+            timeout=1.0,
+            candidates=candidates,
+            probe_runner=probe_runner,
+        )
+
+        self.assertEqual(result.status, "pass")
+        self.assertEqual(calls, ["/fake/python-old", "/fake/python-good"])
+        self.assertIn("mode=auto", result.details)
+        self.assertIn("candidates_checked=2", result.details)
+        self.assertIn("selected_candidate=python-good", result.details)
+        self.assertIn("python_version=3.11.9", result.details)
+        self.assertEqual(self.checker.readiness_exit_code([result]), 0)
+
+    def test_install_backend_auto_fails_with_bounded_candidate_list(self) -> None:
+        candidates = tuple(
+            self.checker.PythonCandidate(f"python-missing-{index}", f"/fake/{index}")
+            for index in range(7)
+        )
+
+        def probe_runner(
+            python: str, *, timeout: float
+        ) -> subprocess.CompletedProcess[str]:
+            version = "3.14." + python.rsplit("/", 1)[-1]
+            return subprocess.CompletedProcess(
+                [python, "-c", "probe"],
+                0,
+                stdout=(
+                    '{"error": "ModuleNotFoundError", "importable": false, '
+                    '"message": "No module named setuptools", '
+                    f'"python_version": "{version}"}}'
+                ),
+                stderr="",
+            )
+
+        result = self.checker.check_install_backend_auto(
+            python=None,
+            timeout=1.0,
+            candidates=candidates,
+            probe_runner=probe_runner,
+        )
+
+        self.assertEqual(result.status, "fail")
+        self.assertEqual(len(result.details), self.checker.MAX_DETAILS_PER_CHECK)
+        self.assertIn("mode=auto", result.details)
+        self.assertIn("candidates_checked=7", result.details)
+        details = "\n".join(result.details)
+        self.assertIn("failed_candidate=python-missing-0", details)
+        self.assertIn("failed_candidate=python-missing-4", details)
+        self.assertNotIn("failed_candidate=python-missing-5", details)
+        self.assertIn("--install-backend-python PYTHON", details)
+        self.assertIn("do not download dependencies", details)
+        self.assertEqual(self.checker.readiness_exit_code([result]), 1)
+
+    def test_install_backend_candidate_discovery_is_bounded(self) -> None:
+        mapping = {
+            "python3": "/fake/current",
+            "python": "/fake/python",
+            "python3.14": "/fake/python3.14",
+            "python3.13": "/fake/python3.13",
+            "python3.12": "/fake/python3.12",
+            "python3.11": "/fake/python3.11",
+            "python3.10": "/fake/python3.10",
+            "python3.9": "/fake/python3.9",
+            "python3.8": "/fake/python3.8",
+        }
+
+        candidates = self.checker.discover_install_backend_python_candidates(
+            explicit_python="/fake/explicit",
+            current_executable="/fake/current",
+            virtual_env="/fake/venv",
+            which_func=mapping.get,
+        )
+
+        labels = [candidate.label for candidate in candidates]
+        self.assertLessEqual(
+            len(candidates), self.checker.MAX_INSTALL_BACKEND_AUTO_CANDIDATES
+        )
+        self.assertEqual(labels[:3], [
+            "explicit --install-backend-python",
+            "current interpreter",
+            "active virtualenv",
+        ])
+        self.assertNotIn("python3", labels)
+
 
 if __name__ == "__main__":
     unittest.main()

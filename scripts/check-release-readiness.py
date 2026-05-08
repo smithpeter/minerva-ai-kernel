@@ -18,7 +18,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Callable, Iterable, Mapping, Sequence
 
 
 DEFAULT_DOMAIN = "minervakernel.com"
@@ -26,7 +26,19 @@ DEFAULT_REPO = "smithpeter/minerva-ai-kernel"
 MAX_DETAIL_CHARS = 220
 MAX_DETAILS_PER_CHECK = 8
 MAX_LIST_ITEMS = 5
-INSTALL_BACKEND_CHECKS = ("current", "fresh-venv", "skip")
+MAX_INSTALL_BACKEND_AUTO_CANDIDATES = 8
+INSTALL_BACKEND_CHECKS = ("auto", "current", "fresh-venv", "skip")
+INSTALL_BACKEND_AUTO_COMMANDS = (
+    "python3",
+    "python",
+    "python3.14",
+    "python3.13",
+    "python3.12",
+    "python3.11",
+    "python3.10",
+    "python3.9",
+    "python3.8",
+)
 
 SECRET_PATTERNS = (
     re.compile(r"gh[pousr]_[A-Za-z0-9_]{20,}"),
@@ -64,6 +76,12 @@ class CheckResult:
     verified_by: str
     requires: str
     details: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class PythonCandidate:
+    label: str
+    executable: str
 
 
 class TitleParser(html.parser.HTMLParser):
@@ -183,21 +201,22 @@ def parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     parser.add_argument(
         "--install-backend",
         choices=INSTALL_BACKEND_CHECKS,
-        default="current",
+        default="auto",
         help=(
-            "Check the offline editable-install build backend in the current "
-            "target interpreter, in a fresh venv, or skip the local install "
-            "backend check. Defaults to current."
+            "Check the offline editable-install build backend by bounded "
+            "local Python auto-discovery, in the current target interpreter, "
+            "in a fresh venv, or skip the local install backend check. "
+            "Defaults to auto."
         ),
     )
     parser.add_argument(
         "--install-backend-python",
-        default=sys.executable,
+        default=None,
         metavar="PYTHON",
         help=(
-            "Python executable to probe for --install-backend current or to "
-            "use when creating the fresh venv. Defaults to this script's "
-            "interpreter."
+            "Python executable to probe for --install-backend current, to use "
+            "when creating the fresh venv, or to try first in auto mode. "
+            "Defaults to this script's interpreter for current and fresh-venv."
         ),
     )
     return parser.parse_args(argv)
@@ -310,7 +329,7 @@ def check_github_actions(
 
 
 def check_install_backend(
-    *, mode: str, python: str, timeout: float
+    *, mode: str, python: str | None, timeout: float
 ) -> CheckResult:
     if mode == "skip":
         return result(
@@ -321,12 +340,14 @@ def check_install_backend(
             [
                 "skipped by --install-backend skip",
                 (
-                    "next_action=run with --install-backend current or "
-                    "--install-backend fresh-venv before relying on offline "
-                    "editable install"
+                    "next_action=run with --install-backend auto, current, "
+                    "or fresh-venv before relying on offline editable install"
                 ),
             ],
         )
+    if mode == "auto":
+        return check_install_backend_auto(python=python, timeout=timeout)
+    python = python or sys.executable
     if mode == "fresh-venv":
         return check_install_backend_in_fresh_venv(python=python, timeout=timeout)
     return install_backend_result_from_probe(
@@ -381,6 +402,133 @@ def run_backend_probe(
     return run_command((python, "-c", BUILD_BACKEND_PROBE), timeout=timeout)
 
 
+def check_install_backend_auto(
+    *,
+    python: str | None,
+    timeout: float,
+    candidates: Sequence[PythonCandidate] | None = None,
+    probe_runner: Callable[..., subprocess.CompletedProcess[str]] | None = None,
+) -> CheckResult:
+    if candidates is None:
+        candidates = discover_install_backend_python_candidates(explicit_python=python)
+    probe_runner = probe_runner or run_backend_probe
+
+    failures: list[str] = []
+    checked = 0
+    for candidate in list(candidates)[:MAX_INSTALL_BACKEND_AUTO_CANDIDATES]:
+        checked += 1
+        probe = probe_runner(candidate.executable, timeout=timeout)
+        probe_result = install_backend_result_from_probe(probe, mode="auto")
+        if probe_result.status == "pass":
+            details = [
+                "mode=auto",
+                f"candidates_checked={checked}",
+                f"selected_candidate={candidate.label}",
+            ]
+            for key in ("python_version", "setuptools.build_meta_importable"):
+                value = detail_value(probe_result, key)
+                if value:
+                    details.append(f"{key}={value}")
+            details.append(install_backend_success_next_action())
+            return result(
+                "local_install_backend",
+                "pass",
+                "bounded Python auto-discovery",
+                install_backend_requires("auto"),
+                details,
+            )
+        failures.append(
+            install_backend_auto_failure_summary(candidate, probe_result, probe)
+        )
+
+    max_failures = MAX_DETAILS_PER_CHECK - 3
+    details = ["mode=auto", f"candidates_checked={checked}"]
+    if failures:
+        details.extend(failures[:max_failures])
+    else:
+        details.append("no local Python candidates found in bounded search")
+    details.append(install_backend_auto_failure_next_action())
+    return result(
+        "local_install_backend",
+        "fail",
+        "bounded Python auto-discovery",
+        install_backend_requires("auto"),
+        details,
+    )
+
+
+def discover_install_backend_python_candidates(
+    *,
+    explicit_python: str | None = None,
+    current_executable: str | None = None,
+    virtual_env: str | None = None,
+    which_func: Callable[[str], str | None] = shutil.which,
+) -> tuple[PythonCandidate, ...]:
+    candidates: list[PythonCandidate] = []
+    seen: set[str] = set()
+
+    def add(label: str, executable: str | None) -> None:
+        if not executable or len(candidates) >= MAX_INSTALL_BACKEND_AUTO_CANDIDATES:
+            return
+        identity = python_candidate_identity(executable)
+        if identity in seen:
+            return
+        seen.add(identity)
+        candidates.append(PythonCandidate(label=label, executable=executable))
+
+    add("explicit --install-backend-python", explicit_python)
+    add("current interpreter", current_executable or sys.executable)
+
+    active_virtual_env = (
+        virtual_env if virtual_env is not None else os.environ.get("VIRTUAL_ENV")
+    )
+    if active_virtual_env:
+        venv_python = Path(active_virtual_env) / (
+            "Scripts/python.exe" if os.name == "nt" else "bin/python"
+        )
+        add("active virtualenv", str(venv_python))
+
+    for command in INSTALL_BACKEND_AUTO_COMMANDS:
+        add(command, which_func(command))
+
+    return tuple(candidates)
+
+
+def python_candidate_identity(executable: str) -> str:
+    try:
+        path = Path(executable).expanduser()
+        if path.exists():
+            return str(path.resolve())
+    except OSError:
+        pass
+    return executable
+
+
+def install_backend_auto_failure_summary(
+    candidate: PythonCandidate,
+    probe_result: CheckResult,
+    probe: subprocess.CompletedProcess[str],
+) -> str:
+    parts = [f"failed_candidate={candidate.label}"]
+    version = detail_value(probe_result, "python_version")
+    if version:
+        parts.append(f"python_version={version}")
+    importable = detail_value(probe_result, "setuptools.build_meta_importable")
+    if importable:
+        parts.append(f"setuptools.build_meta_importable={importable}")
+    error = detail_value(probe_result, "error")
+    message = detail_value(probe_result, "message")
+    if error:
+        parts.append(f"error={error}")
+    elif message:
+        parts.append(f"message={message}")
+    elif probe.returncode != 0:
+        parts.append(f"probe_exit_code={probe.returncode}")
+    else:
+        parts.append("probe_result=unavailable")
+    return " ".join(parts)
+
+
 def install_backend_result_from_probe(
     probe: subprocess.CompletedProcess[str], *, mode: str
 ) -> CheckResult:
@@ -424,12 +572,7 @@ def install_backend_result_from_probe(
         "setuptools.build_meta_importable=" + ("yes" if importable else "no")
     )
     if importable:
-        details.append(
-            (
-                "next_action=offline editable install can use "
-                "--no-build-isolation with this local build backend available"
-            )
-        )
+        details.append(install_backend_success_next_action())
         return result(
             "local_install_backend",
             "pass",
@@ -455,9 +598,18 @@ def install_backend_result_from_probe(
 
 
 def install_backend_requires(mode: str) -> str:
+    if mode == "auto":
+        return "discovered local Python with setuptools.build_meta available"
     if mode == "fresh-venv":
         return "fresh venv seeded with setuptools.build_meta"
     return "target Python with setuptools.build_meta available"
+
+
+def install_backend_success_next_action() -> str:
+    return (
+        "next_action=offline editable install can use "
+        "--no-build-isolation with this local build backend available"
+    )
 
 
 def install_backend_failure_next_action() -> str:
@@ -466,6 +618,15 @@ def install_backend_failure_next_action() -> str:
         "setuptools.build_meta, or seed setuptools from an approved local "
         "wheel/cache before rerunning; do not download dependencies during "
         "this readiness check"
+    )
+
+
+def install_backend_auto_failure_next_action() -> str:
+    return (
+        "next_action=activate or provide local Python with "
+        "setuptools.build_meta, then rerun --install-backend auto or "
+        "--install-backend current --install-backend-python PYTHON; do not "
+        "download dependencies"
     )
 
 

@@ -57,6 +57,11 @@ save local evidence for review and evaluation.
   `local_install_backend` probe for `setuptools.build_meta` in the current
   interpreter or a fresh venv, so offline editable-install setup gaps are
   reported before `pip install --no-build-isolation -e .` fails.
+- Added bounded auto-discovery for local install-backend readiness:
+  `python3 scripts/check-release-readiness.py --skip-external --install-backend auto`
+  reports the first local Python candidate that can import
+  `setuptools.build_meta`, or a bounded failed-candidate list with the next
+  action.
 - Recorded full local release dry-run evidence for commit
   `ae8bc6bd773f9b745f5b8bbcb8c7b24518882ac7`, including install/smoke,
   `doctor`, `observe`, run-record inspection, `policy-check`, eval smoke,

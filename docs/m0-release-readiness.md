@@ -69,23 +69,26 @@ python3 scripts/check-release-readiness.py --content-reviewed "Verified public M
 The script reports local checkout metadata, checks GitHub Actions for the
 current commit when `gh` and network access are available, checks DNS/TLS/HTTPS
 for `minervakernel.com`, checks that the local offline editable-install build
-backend is importable, and keeps output bounded for public issue comments. Use
-`python3 scripts/check-release-readiness.py --skip-external` to verify the local
-checkout and current-interpreter install-backend path when external access is
-unavailable.
+backend is importable in a bounded set of local Python candidates, and keeps
+output bounded for public issue comments. Use
+`python3 scripts/check-release-readiness.py --skip-external --install-backend auto`
+to verify the local checkout and discover a local install-backend target when
+external access is unavailable.
 
-To test the fresh-virtualenv prerequisite for the documented offline editable
-install path without network access, run:
+To test one exact target interpreter or the fresh-virtualenv prerequisite for
+the documented offline editable install path without network access, run:
 
 ```bash
+python3 scripts/check-release-readiness.py --skip-external --install-backend current --install-backend-python PYTHON
 python3 scripts/check-release-readiness.py --skip-external --install-backend fresh-venv
 ```
 
 The `local_install_backend` check passes only when `setuptools.build_meta` is
-importable in the selected target. A failure means the interpreter or freshly
-created venv does not have the local build backend required by
-`python -m pip install --no-index --no-deps --no-build-isolation -e .`. The next
-action is to use a local interpreter or venv that already includes
+importable in the selected or discovered target. Auto mode reports the selected
+passing candidate, or a bounded list of failed candidates. A failure means the
+interpreter or freshly created venv does not have the local build backend
+required by `python -m pip install --no-index --no-deps --no-build-isolation -e .`.
+The next action is to use a local interpreter or venv that already includes
 `setuptools.build_meta`, or seed it from an approved local wheel/cache before
 rerunning; do not download dependencies as part of this readiness check. A
 `skipped` status is acceptable only when separate install-backend evidence is

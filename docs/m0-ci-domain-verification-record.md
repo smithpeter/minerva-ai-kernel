@@ -66,7 +66,7 @@ python3 scripts/check-release-readiness.py --content-reviewed "Verified public M
 Local-only dry run, useful when network or repository access is unavailable:
 
 ```bash
-python3 scripts/check-release-readiness.py --skip-external
+python3 scripts/check-release-readiness.py --skip-external --install-backend auto
 ```
 
 Fresh-venv install-backend dry run:
@@ -87,14 +87,15 @@ What the checker verifies locally:
 
 - Repository root basename, current commit SHA, current branch, and repository
   slug.
-- Whether `setuptools.build_meta` is importable in the selected target
-  interpreter, or in a fresh venv when `--install-backend fresh-venv` is used.
+- Whether `setuptools.build_meta` is importable in a bounded set of discovered
+  local Python candidates, in one selected target interpreter, or in a fresh
+  venv when `--install-backend fresh-venv` is used.
 - Whether the repeatable process can run without external access by using
   `--skip-external`.
 
 Interpret `local_install_backend` as follows:
 
-- `pass`: the selected local target has the build backend needed for
+- `pass`: the selected or discovered local target has the build backend needed for
   `python -m pip install --no-index --no-deps --no-build-isolation -e .`.
 - `fail`: use a local interpreter or venv that already provides
   `setuptools.build_meta`, or seed it from an approved local wheel/cache before

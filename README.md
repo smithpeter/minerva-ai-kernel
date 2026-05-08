@@ -130,16 +130,21 @@ python3 scripts/check-release-readiness.py --content-reviewed "Verified public M
 For local offline editable-install readiness without network access, run:
 
 ```bash
-python3 scripts/check-release-readiness.py --skip-external --install-backend current
-python3 scripts/check-release-readiness.py --skip-external --install-backend fresh-venv
+python3 scripts/check-release-readiness.py --skip-external --install-backend auto
 ```
 
 The `local_install_backend` check reports whether `setuptools.build_meta` is
-importable in the target interpreter or in a fresh virtualenv created from it.
-`pass` means the documented `--no-build-isolation -e .` install has a local
-build backend available. `fail` means use a local interpreter or venv that
-already includes the backend, or seed it from an approved local wheel/cache
-before rerunning; the readiness checker does not download dependencies.
+importable in a bounded set of local Python candidates and reports the selected
+passing candidate. `pass` means the documented `--no-build-isolation -e .`
+install has a local build backend available. `fail` reports a bounded list of
+failed candidates; use a local interpreter or venv that already includes the
+backend, or seed it from an approved local wheel/cache before rerunning. The
+readiness checker does not download dependencies.
+
+Use `--install-backend current --install-backend-python PYTHON` to verify one
+exact target interpreter, or `--install-backend fresh-venv` to verify whether a
+fresh virtualenv created from the selected interpreter is seeded with the
+backend.
 
 ## Local AI Team
 
