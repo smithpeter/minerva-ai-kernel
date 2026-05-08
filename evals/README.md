@@ -59,7 +59,16 @@ observation schema, category labels, action labels, duplicate IDs, policy
 expectation, and redaction expectations for secret cases. Unit tests cover the
 default slice and malformed fixtures.
 
-The M1 metrics report is published in `evals/m1_eval_report.md`.
+The M1 metrics report is generated deterministically from local fixtures and
+published in `evals/m1_eval_report.md`.
+
+Run it without network or model access:
+
+```bash
+python3 -m minerva_kernel.eval_report --format json
+python3 -m minerva_kernel.eval_report --format markdown
+minerva eval-report --format json
+```
 
 Current corpus category counts after M1 growth:
 

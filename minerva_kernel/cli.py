@@ -51,6 +51,22 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
         help="Override the artifact created_at timestamp for reproducible fixtures.",
     )
     ci_artifact.add_argument("path")
+    eval_report = subparsers.add_parser(
+        "eval-report",
+        help="Emit deterministic M1 eval metrics from local fixtures.",
+    )
+    eval_report.add_argument(
+        "--format",
+        choices=("json", "markdown"),
+        default="json",
+        help="Output format.",
+    )
+    eval_report.add_argument(
+        "--target-per-category",
+        type=int,
+        default=15,
+        help="Required corpus cases per category for gap reporting.",
+    )
     args = parser.parse_args(argv)
 
     if args.command == "doctor":
@@ -117,6 +133,22 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
             )
         except (OSError, json.JSONDecodeError, ValueError) as exc:
             print(f"Render CI artifact failed: {exc}", file=sys.stderr)
+            raise SystemExit(1) from exc
+        return
+
+    if args.command == "eval-report":
+        from .eval_report import render_m1_eval_report
+
+        try:
+            print(
+                render_m1_eval_report(
+                    output_format=args.format,
+                    target_per_category=args.target_per_category,
+                ),
+                end="",
+            )
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            print(f"Eval report failed: {exc}", file=sys.stderr)
             raise SystemExit(1) from exc
         return
 

@@ -32,6 +32,7 @@ python3 -m pip install --no-deps .
 minerva doctor
 minerva observe -- python3 -c "import sys; print('example failure', file=sys.stderr); sys.exit(1)"
 python -m minerva_kernel.eval_smoke
+minerva eval-report --format markdown
 ```
 
 `minerva observe --` saves a run record under `.minerva/runs/`. If no local
