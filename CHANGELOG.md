@@ -73,9 +73,18 @@ save local evidence for review and evaluation.
 - Added a `minervakernel.com` domain cutover runbook covering nginx and managed
   static-host paths, certificate requirements, DNS cutover, rollback, and
   readiness verification commands.
+- Added a GitHub Pages deployment workflow for the public site. The workflow
+  validates the static artifact, uploads `public-site/`, deploys it through
+  GitHub Pages, and includes `public-site/CNAME` for `minervakernel.com`;
+  DNS, Pages custom-domain settings, managed TLS, HTTPS content, and
+  brand-contamination checks remain external release gates.
 - Added a public artifact test that checks required Minerva positioning,
   docs/GitHub links, standalone static HTML constraints, and rejected brand
   markers in `public-site/`.
+- Added Pages workflow assertions that verify the workflow publishes
+  `public-site/`, uses GitHub Pages deployment actions, includes required Pages
+  permissions, avoids private-server deployment commands, and has the expected
+  custom-domain artifact.
 - Recorded the current `minervakernel.com` no-go blocker: on 2026-05-08, TLS
   diagnostics for commit `109b524467b6fb6cf78f00c86416b070c4691226` showed
   `CN=test.voxsign.net`, and a certificate-verification-bypassed fetch returned
@@ -143,6 +152,8 @@ save local evidence for review and evaluation.
 - [M0 release readiness checklist](docs/m0-release-readiness.md)
 - [M0 local release dry-run guide](docs/m0-local-release-dry-run.md)
 - [Standalone Minerva public page artifact](public-site/index.html)
+- [GitHub Pages public-site deployment workflow](.github/workflows/pages.yml)
+- [GitHub Pages custom-domain artifact](public-site/CNAME)
 - [minervakernel.com domain cutover runbook](docs/minervakernel-domain-cutover-runbook.md)
 - [2026-05-08 post-metadata-fix local release dry-run evidence](.minerva/release-evidence/2026-05-08-post-metadata-fix-local-release-dry-run.md)
 - [2026-05-08 local release dry-run evidence](.minerva/release-evidence/2026-05-08-local-release-dry-run.md)
@@ -162,6 +173,9 @@ save local evidence for review and evaluation.
 - Cut over `minervakernel.com` with the domain runbook, then verify DNS, TLS
   certificate identity, HTTPS Minerva page content, and VoxSign contamination
   guard before any public announcement.
+- If GitHub Pages is the selected public-site host, enable/verify Pages source
+  from GitHub Actions, custom-domain settings for `minervakernel.com`, DNS
+  records, and the managed certificate before claiming readiness.
 - Continue M1 CI renderer work so every branch publishes bounded Minerva
   summary and artifact evidence.
 - Add SDK, agent, and CI integration examples that preserve redaction,

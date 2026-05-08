@@ -13,6 +13,14 @@ The intended static public page artifact is
 for nginx/static-host setup, certificate requirements, rollback, and readiness
 verification commands.
 
+The GitHub Pages deployment path is
+[.github/workflows/pages.yml](../.github/workflows/pages.yml). It validates the
+static artifact tests, uploads `public-site/`, and deploys through GitHub
+Pages. [public-site/CNAME](../public-site/CNAME) carries `minervakernel.com`
+for the Pages artifact. A green Pages workflow is publish-path evidence only;
+custom-domain settings, DNS, TLS certificate identity, HTTPS content, and the
+Minerva/VoxSign brand guard still require release-owner verification.
+
 Preferred repeatable command:
 
 ```bash
@@ -62,6 +70,7 @@ credentials.
 | Local unit gate passes. | `python3 -m unittest discover -s tests` | Command exits 0 and reports `OK`. |
 | Local eval smoke gate is available for release readiness. | `python3 -m minerva_kernel.eval_smoke` | Command exits 0 and reports all smoke cases passed. |
 | Public static artifact is present and clean. | `python3 -m unittest tests.test_public_site_artifact` | Command exits 0 and verifies required Minerva signals, docs/GitHub links, and no rejected markers in `public-site/`. |
+| Pages workflow publishes the public artifact. | `python3 -m unittest tests.test_pages_workflow` | Command exits 0 and verifies the Pages workflow uploads `public-site/`, uses `actions/deploy-pages`, includes required Pages permissions, avoids private-server deploy commands, and includes `public-site/CNAME`. |
 | Repeatable readiness checker is available. | `python3 scripts/check-release-readiness.py --skip-external` | Local checkout metadata and current-interpreter install-backend status are reported; external checks are marked `skipped`. |
 | Fresh venv has the offline editable-install backend. | `python3 scripts/check-release-readiness.py --skip-external --install-backend fresh-venv` | `local_install_backend` is `pass`, or a setup blocker is recorded before the install dry run. |
 | Public docs can be searched for launch blockers. | `rg -n "auto[- ]?repair|replace CI|full AIOps|credential|secret|API key" README.md docs examples` | Any match is reviewed in context before announcement. |
@@ -77,6 +86,7 @@ not require adding secrets to this checkout.
 | Area | Required Confirmation | Evidence To Record |
 | --- | --- | --- |
 | GitHub Actions status | The GitHub Actions compile/test/eval smoke gate is green on the exact release branch or announcement commit. | Workflow run URL, commit SHA, branch, conclusion, and timestamp. |
+| GitHub Pages status | If GitHub Pages is the selected public-site path, the Pages deployment workflow is green for the exact release branch or announcement commit and the repository Pages source/custom-domain settings point at GitHub Actions and `minervakernel.com`. | Pages workflow run URL, commit SHA, Pages URL, custom-domain settings note, and timestamp. |
 | Domain DNS target | `minervakernel.com` resolves to the intended public project surface or announcement destination. | DNS provider target, observed A/AAAA/CNAME records, and timestamp. |
 | Domain TLS | `https://minervakernel.com/` presents a valid certificate for `minervakernel.com`. | Certificate subject/SAN, issuer, validity window, and timestamp. |
 | Domain content | The loaded HTTPS page is the intended public Minerva page from `public-site/index.html` or an approved successor, not a VoxSign page, parking page, stale preview, or unrelated service. | URL, page title or landing identifier, screenshot or reviewer note, and timestamp. |
@@ -152,6 +162,7 @@ python3 -m compileall minerva_kernel
 python3 -m unittest discover -s tests
 python3 -m minerva_kernel.eval_smoke
 python3 -m unittest tests.test_public_site_artifact
+python3 -m unittest tests.test_pages_workflow
 ```
 
 GitHub Actions status, when the release owner already has access through the
@@ -207,6 +218,7 @@ Manual confirmations:
 - minervakernel.com TLS certificate:
 - minervakernel.com HTTPS content:
 - Public artifact/runbook reviewed:
+- GitHub Pages workflow/custom-domain settings:
 - Release owner go/no-go:
 ```
 
@@ -217,6 +229,9 @@ No-go if any of the following are true:
 - Local compile, unit tests, eval smoke, or remote CI fails on the release
   commit.
 - GitHub Actions status is missing, red, cancelled, or for a different commit.
+- GitHub Pages is the selected public-site path and its deployment workflow,
+  Pages source, custom-domain settings, or managed certificate are missing or
+  failed.
 - `minervakernel.com` does not resolve to the intended public target.
 - HTTPS for `minervakernel.com` is unavailable, expired, mismatched, or points
   to VoxSign or other unrelated content.

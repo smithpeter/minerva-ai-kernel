@@ -47,4 +47,4 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T39 | #39 | done | Integration / Release | Fix CI smoke failure caused by Python 3.x selecting 3.14 |
 | T40 | #40 | done | Release / Integration | Add domain brand contamination guard to release readiness |
 | T41 | #41 | done | Release / Docs | Add Minerva public site artifact and domain cutover runbook |
-| T42 | #42 | pending | Release / Integration | Add GitHub Pages deployment workflow for public site |
+| T42 | #42 | done | Release / Integration | Add GitHub Pages deployment workflow for public site |

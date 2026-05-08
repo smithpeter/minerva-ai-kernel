@@ -13,6 +13,8 @@ minervakernel.com
 Standalone public page artifact:
 
 - [public-site/index.html](public-site/index.html)
+- [public-site/CNAME](public-site/CNAME)
+- [GitHub Pages public-site deployment workflow](.github/workflows/pages.yml)
 - [minervakernel.com domain cutover runbook](docs/minervakernel-domain-cutover-runbook.md)
 
 ## Positioning
@@ -91,6 +93,7 @@ Start here:
 - [M0 release readiness checklist](docs/m0-release-readiness.md)
 - [M0 local release dry-run guide](docs/m0-local-release-dry-run.md)
 - [Standalone Minerva public page artifact](public-site/index.html)
+- [GitHub Pages public-site deployment workflow](.github/workflows/pages.yml)
 - [minervakernel.com domain cutover runbook](docs/minervakernel-domain-cutover-runbook.md)
 - [M0 launch blog post draft](docs/m0-launch-blog-post.md)
 - [M0 demo script](examples/m0-demo-script.md)
@@ -142,6 +145,18 @@ Serve [public-site/index.html](public-site/index.html) for the intended static
 Minerva page, and use the
 [domain cutover runbook](docs/minervakernel-domain-cutover-runbook.md) for
 nginx/static-host, certificate, rollback, and verification steps.
+
+The repository includes a GitHub Pages deployment workflow at
+[.github/workflows/pages.yml](.github/workflows/pages.yml). On `main` changes
+to the public-site artifact, or on manual dispatch, it validates the static
+artifact, uploads `public-site/` with `actions/upload-pages-artifact`, and
+deploys it with `actions/deploy-pages`. The custom-domain artifact is
+[public-site/CNAME](public-site/CNAME), containing `minervakernel.com`.
+Workflow success only proves the Pages artifact was published; the release
+owner must still configure/verify the GitHub Pages custom domain, DNS records,
+managed certificate, HTTPS content, and brand-contamination checks before
+claiming public domain readiness. The Pages path does not use private server
+credentials or deploy to `49.51.134.101`.
 
 For local offline editable-install readiness without network access, run:
 

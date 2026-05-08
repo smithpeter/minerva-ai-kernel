@@ -142,6 +142,47 @@ For a managed static host, object store, or CDN-backed site:
 6. Update DNS records exactly as the host provider requires.
 7. Purge CDN or static-host caches after publishing.
 
+## GitHub Pages Workflow Path
+
+The repository includes a GitHub Pages workflow:
+
+```text
+.github/workflows/pages.yml
+```
+
+The workflow runs on `main` changes that touch the public-site artifact or on
+manual dispatch. It validates the static artifact tests, uploads `public-site/`
+with `actions/upload-pages-artifact`, and deploys the artifact with
+`actions/deploy-pages`. It does not use private server credentials or deploy to
+`49.51.134.101`.
+
+The custom-domain artifact is:
+
+```text
+public-site/CNAME
+```
+
+It contains:
+
+```text
+minervakernel.com
+```
+
+Before relying on the GitHub Pages custom domain, the release owner must:
+
+1. Set the repository Pages source to GitHub Actions if it is not already set.
+2. Confirm the `github-pages` environment and Pages deployment run are green for
+   the intended commit.
+3. Add or verify `minervakernel.com` in the repository's Pages custom-domain
+   settings if GitHub requires an explicit settings-side confirmation.
+4. Configure DNS records exactly as GitHub Pages requires for the apex domain.
+5. Wait for GitHub's managed certificate to issue and become active.
+6. Run the readiness verification commands below without bypassing TLS.
+
+A successful Pages workflow is not enough to claim domain readiness. DNS,
+custom-domain ownership, certificate identity, HTTPS content, and the
+Minerva/VoxSign brand guard must still pass for `minervakernel.com`.
+
 ## Certificate Requirements
 
 The certificate used for `https://minervakernel.com/` must satisfy all of the

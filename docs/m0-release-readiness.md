@@ -23,9 +23,9 @@ the failure state, policy-checks a bounded decision, and saves a local run recor
 | Security Boundaries | Default policy is read-only and fails closed on write tools, shell tools, destructive commands, credential access, unknown action labels, low confidence, higher risk, and escalation requests. | Documented as the M0 safety boundary. Must remain covered by tests. | [M0 launch draft](m0-launch-blog-post.md) and [Decision Schema v0](decision-schema-v0.md). |
 | Redaction | Known sensitive values are redacted before model input and before saved observations, decisions, or run records are written. | Documented and represented in demo/eval expectations. Must remain covered by tests. | [Observation Schema v0](observation-schema-v0.md), [Decision Schema v0](decision-schema-v0.md), and [Failure case guide](failure-case-contributions.md). |
 | CI | GitHub Actions compile/test/eval smoke gate is green on the release branch or announcement commit. | Prepared to rerun on explicit Python 3.11, matching the known-good fresh-venv release evidence; remote status is not verified by this local document. | README CI gate, [CI integration recipe](integration-recipes.md), and [M0 CI and domain verification record](m0-ci-domain-verification-record.md); remote CI must be checked before go. |
-| Docs | README, launch draft, demo script, local dry-run guide, schemas, contribution guide, public site artifact, domain cutover runbook, and release readiness doc are linked and internally consistent. | README and release readiness link the dry-run guide, static public artifact, and domain cutover runbook; launch, demo, schemas, and examples index remain linked. | README project docs, [M0 local release dry-run guide](m0-local-release-dry-run.md), [public site artifact](../public-site/index.html), [domain cutover runbook](minervakernel-domain-cutover-runbook.md), and this file. |
+| Docs | README, launch draft, demo script, local dry-run guide, schemas, contribution guide, public site artifact, Pages deployment workflow, domain cutover runbook, and release readiness doc are linked and internally consistent. | README and release readiness link the dry-run guide, static public artifact, GitHub Pages workflow, and domain cutover runbook; launch, demo, schemas, and examples index remain linked. | README project docs, [M0 local release dry-run guide](m0-local-release-dry-run.md), [public site artifact](../public-site/index.html), [GitHub Pages workflow](../.github/workflows/pages.yml), [domain cutover runbook](minervakernel-domain-cutover-runbook.md), and this file. |
 | Demo | Demo command, saved run record inspection, policy-check step, eval smoke step, and safety checks can be run without a remote LLM. | Passed in the latest local dry run without a remote LLM. | [M0 demo script](../examples/m0-demo-script.md), [M0 local release dry-run guide](m0-local-release-dry-run.md), and [post-metadata-fix local release dry-run evidence](../.minerva/release-evidence/2026-05-08-post-metadata-fix-local-release-dry-run.md). |
-| Domain | `minervakernel.com` resolves to the intended public project surface or announcement destination. | Blocked as of 2026-05-08: direct TLS diagnostics showed `CN=test.voxsign.net`, and a certificate-verification-bypassed fetch returned VoxSign title/content. A standalone Minerva page artifact now exists, but the external domain target still must be cut over and verified. | Release owner must serve [public-site/index.html](../public-site/index.html), follow the [domain cutover runbook](minervakernel-domain-cutover-runbook.md), then verify DNS, TLS, Minerva brand signals, and target content using the [M0 CI and domain verification record](m0-ci-domain-verification-record.md) before go. |
+| Domain | `minervakernel.com` resolves to the intended public project surface or announcement destination. | Blocked as of 2026-05-08: direct TLS diagnostics showed `CN=test.voxsign.net`, and a certificate-verification-bypassed fetch returned VoxSign title/content. A standalone Minerva page artifact and GitHub Pages workflow now exist, but the external custom-domain, DNS, TLS, and served-content checks still must be cut over and verified. | Release owner must serve [public-site/index.html](../public-site/index.html), optionally through the [GitHub Pages workflow](../.github/workflows/pages.yml), follow the [domain cutover runbook](minervakernel-domain-cutover-runbook.md), then verify DNS, TLS, Minerva brand signals, and target content using the [M0 CI and domain verification record](m0-ci-domain-verification-record.md) before go. |
 | Known Limitations | Public materials plainly say M0 is not auto-repair, not full AIOps, not a CI replacement, not a monitoring replacement, and not dependent on a remote LLM for minimum function. | Documented in launch and demo materials. | [M0 launch draft](m0-launch-blog-post.md) and [M0 demo script](../examples/m0-demo-script.md). |
 
 ## Local Release Verification
@@ -69,6 +69,15 @@ for nginx/static-host setup, certificate requirements, rollback, and readiness
 verification commands. The artifact being present in the repository does not
 mean the public domain is fixed; valid TLS and Minerva content must pass
 readiness first.
+
+The GitHub Pages deployment path is
+[.github/workflows/pages.yml](../.github/workflows/pages.yml). It validates the
+static artifact tests, uploads `public-site/`, and deploys it through GitHub
+Pages. [public-site/CNAME](../public-site/CNAME) carries `minervakernel.com`
+for the Pages artifact. A green Pages deployment still does not prove public
+domain readiness; the release owner must verify GitHub Pages custom-domain
+settings, DNS records, the managed certificate, HTTPS content, and the
+Minerva/VoxSign brand guard before go.
 
 For the repeatable CI/domain evidence pass, run:
 
@@ -116,7 +125,10 @@ Completed or ready for release verification:
 - Positioning is explicit: CPU-local failure interpreter for CI/CD, agents, and ops.
 - README includes a quickstart for `minerva doctor`, `minerva observe --`, and eval smoke.
 - README links the clean-checkout local release dry-run guide.
-- README links the standalone public page artifact and domain cutover runbook.
+- README links the standalone public page artifact, GitHub Pages workflow, and
+  domain cutover runbook.
+- GitHub Pages workflow is present to validate and publish `public-site/`, with
+  `public-site/CNAME` carrying `minervakernel.com`.
 - Observation Schema v0 and Decision Schema v0 define the structured contracts.
 - The default safety claim is read-only, policy-gated execution.
 - Redaction expectations are documented for observations, decisions, run records, and contributed failure cases.
@@ -137,6 +149,9 @@ Remaining risks:
   are currently blocked until the external target serves a certificate valid
   for `minervakernel.com` and the intended Minerva public page artifact, not
   VoxSign.
+- GitHub Pages custom-domain settings, DNS records, and managed certificate
+  status still require external verification even if the Pages workflow is
+  green.
 - The no-build-isolation editable install path requires the fresh virtualenv to
   already include the local build backend; Python 3.14 and Python 3.13 venvs on
   the T36 host did not seed `setuptools`. The readiness checker now reports
@@ -157,6 +172,8 @@ Launch blockers:
 - Any unredacted secret, credential, private log, full environment dump, or proprietary data in docs, examples, fixtures, or release materials.
 - Missing, broken, mismatched, or VoxSign-contaminated public domain target for
   `minervakernel.com`.
+- Missing or failed Pages deployment evidence when GitHub Pages is the selected
+  public-site path.
 - Red remote CI on the release branch or announcement commit.
 
 ## Go / No-Go Criteria
@@ -172,6 +189,9 @@ Go when all of the following are true:
 - The served page matches or intentionally supersedes
   [public-site/index.html](../public-site/index.html) without weakening M0
   safety non-claims.
+- If GitHub Pages is used, the Pages workflow is green for the release commit
+  and its custom-domain settings, DNS records, and managed certificate are
+  verified.
 - The announcement uses only the narrow M0 claim and preserves the explicit non-claims.
 
 No-go if any of the following are true:
