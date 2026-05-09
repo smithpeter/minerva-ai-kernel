@@ -85,6 +85,32 @@ class ExecutorTests(unittest.TestCase):
         self.assertIn("readable=True", result.stdout_tail)
         self.assertEqual(result.runtime["executor_state"], "completed")
 
+    def test_check_permissions_rejects_path_escape(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            observation = _observation(command="cat ../outside.txt")
+
+            result = execute_action(
+                _decision("check_permissions"),
+                cwd=tmpdir,
+                observation=observation,
+            )
+
+        self.assertEqual(result.runtime["executor_state"], "path_rejected")
+        self.assertIn("rejected unsafe path candidate", result.stderr_tail)
+
+    def test_check_permissions_rejects_credential_like_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            observation = _observation(command="cat .env")
+
+            result = execute_action(
+                _decision("check_permissions"),
+                cwd=tmpdir,
+                observation=observation,
+            )
+
+        self.assertEqual(result.runtime["executor_state"], "path_rejected")
+        self.assertIn(".env", result.stderr_tail)
+
     def test_check_logs_summarizes_existing_observation_tails(self) -> None:
         observation = _observation(stderr_tail="Traceback: boom")
 

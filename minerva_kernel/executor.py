@@ -12,6 +12,23 @@ from .types import Decision, Observation
 
 
 DEFAULT_TAIL_CHARS = 4000
+SENSITIVE_PATH_PARTS = frozenset(
+    {
+        ".aws",
+        ".env",
+        ".git-credentials",
+        ".netrc",
+        ".ssh",
+        "authorized_keys",
+        "credential",
+        "credentials",
+        "id_ed25519",
+        "id_rsa",
+        "private_key",
+        "secret",
+        "token",
+    }
+)
 
 
 def execute_action(
@@ -168,9 +185,20 @@ def _check_permissions(
     candidates = [cwd]
     command_path = _candidate_path(observation)
     if command_path is not None:
-        candidates.append(
-            command_path if command_path.is_absolute() else cwd / command_path
-        )
+        resolved = _resolve_safe_path(command_path, cwd)
+        if resolved is None:
+            return _observation(
+                action=action,
+                cwd=cwd,
+                stderr=f"rejected unsafe path candidate: {command_path}",
+                duration_ms=_elapsed_ms(started),
+                runtime={
+                    "policy_allowed": True,
+                    "executor_state": "path_rejected",
+                    "path_candidate": str(command_path),
+                },
+            )
+        candidates.append(resolved)
 
     lines: list[str] = []
     for path in candidates:
@@ -282,6 +310,31 @@ def _candidate_path(observation: Observation | None) -> Path | None:
             continue
         return Path(part)
     return None
+
+
+def _resolve_safe_path(path: Path, cwd: Path) -> Path | None:
+    if _is_sensitive_path(path):
+        return None
+
+    candidate = path if path.is_absolute() else cwd / path
+    try:
+        resolved = candidate.resolve(strict=False)
+        root = cwd.resolve(strict=False)
+        resolved.relative_to(root)
+    except (OSError, ValueError):
+        return None
+
+    if _is_sensitive_path(resolved.relative_to(root)):
+        return None
+    return resolved
+
+
+def _is_sensitive_path(path: Path) -> bool:
+    parts = {part.lower() for part in path.parts}
+    if parts & SENSITIVE_PATH_PARTS:
+        return True
+    lowered = str(path).lower()
+    return any(part in lowered for part in ("/.ssh/", "/.aws/", "private_key"))
 
 
 def _tail(value: str, limit: int = DEFAULT_TAIL_CHARS) -> str:
