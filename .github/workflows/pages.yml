@@ -38,17 +38,20 @@ jobs:
         run: python3 -m unittest tests.test_public_site_artifact tests.test_pages_workflow
 
       - name: Configure GitHub Pages
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: actions/configure-pages@v5
         with:
           enablement: true
 
       - name: Upload public site artifact
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: public-site
 
   deploy:
     name: Deploy public site to GitHub Pages
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     needs: build
     runs-on: ubuntu-latest
     environment:

@@ -80,6 +80,9 @@ save local evidence for review and evaluation.
   brand-contamination checks remain external release gates.
 - Updated the GitHub Pages workflow to enable Pages from the GitHub Actions
   path when the repository has not already been configured for Pages.
+- Limited Pages deployment steps to manual dispatch so normal pushes validate
+  `public-site/` without failing when repository Pages settings still require
+  release-owner enablement.
 - Added a public artifact test that checks required Minerva positioning,
   docs/GitHub links, standalone static HTML constraints, and rejected brand
   markers in `public-site/`.

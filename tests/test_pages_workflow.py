@@ -19,6 +19,7 @@ class PagesWorkflowTests(unittest.TestCase):
         self.assertIn("actions/deploy-pages@v4", workflow)
         self.assertIn("actions/configure-pages@v5", workflow)
         self.assertIn("enablement: true", workflow)
+        self.assertIn("github.event_name == 'workflow_dispatch'", workflow)
         self.assertIn(
             "python3 -m unittest tests.test_public_site_artifact "
             "tests.test_pages_workflow",
