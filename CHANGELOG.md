@@ -78,6 +78,8 @@ save local evidence for review and evaluation.
   GitHub Pages, and includes `public-site/CNAME` for `minervakernel.com`;
   DNS, Pages custom-domain settings, managed TLS, HTTPS content, and
   brand-contamination checks remain external release gates.
+- Updated the GitHub Pages workflow to enable Pages from the GitHub Actions
+  path when the repository has not already been configured for Pages.
 - Added a public artifact test that checks required Minerva positioning,
   docs/GitHub links, standalone static HTML constraints, and rejected brand
   markers in `public-site/`.
