@@ -51,6 +51,45 @@ class BaselineInterpreterTests(unittest.TestCase):
         self.assertEqual(diagnosis.decision.action, "check_permissions")
         self.assertTrue(diagnosis.policy_decision.allowed)
 
+    def test_default_diagnosis_handles_npm_script_failure(self) -> None:
+        diagnosis = diagnose_observation(
+            _observation(stderr_tail="npm ERR! Missing script: test")
+        )
+
+        self.assertEqual(
+            diagnosis.decision.failure,
+            "node_package_or_script_failure",
+        )
+        self.assertEqual(diagnosis.decision.action, "inspect_dependencies")
+        self.assertTrue(diagnosis.policy_decision.allowed)
+
+    def test_default_diagnosis_handles_git_repository_failure(self) -> None:
+        diagnosis = diagnose_observation(
+            _observation(stderr_tail="fatal: not a git repository")
+        )
+
+        self.assertEqual(diagnosis.decision.failure, "git_repository_failure")
+        self.assertEqual(diagnosis.decision.action, "check_logs")
+        self.assertTrue(diagnosis.policy_decision.allowed)
+
+    def test_default_diagnosis_handles_container_build_failure(self) -> None:
+        diagnosis = diagnose_observation(
+            _observation(stderr_tail="Dockerfile: failed to solve build step")
+        )
+
+        self.assertEqual(diagnosis.decision.failure, "container_build_failure")
+        self.assertEqual(diagnosis.decision.action, "check_logs")
+        self.assertTrue(diagnosis.policy_decision.allowed)
+
+    def test_default_diagnosis_handles_port_collision(self) -> None:
+        diagnosis = diagnose_observation(
+            _observation(stderr_tail="OSError: [Errno 98] Address already in use")
+        )
+
+        self.assertEqual(diagnosis.decision.failure, "port_in_use")
+        self.assertEqual(diagnosis.decision.action, "check_port")
+        self.assertTrue(diagnosis.policy_decision.allowed)
+
     def test_default_diagnosis_stops_on_successful_command(self) -> None:
         diagnosis = diagnose_observation(
             _observation(exit_code=0, stdout_tail="ok\n", stderr_tail="")

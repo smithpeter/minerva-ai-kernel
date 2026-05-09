@@ -119,6 +119,74 @@ def propose_baseline_decision(observation: Observation) -> Decision:
             reason="Inspect the referenced input or artifact before retrying.",
         )
 
+    if _contains_any(
+        text,
+        (
+            "missing script:",
+            "npm err!",
+            "enoent: no such file or directory, open",
+            "cannot find package.json",
+        ),
+    ):
+        return _decision(
+            failure="node_package_or_script_failure",
+            action="inspect_dependencies",
+            confidence=0.82,
+            evidence=["observation contains an npm or package metadata signal"],
+            reason="Inspect package metadata and scripts before retrying.",
+        )
+
+    if _contains_any(
+        text,
+        (
+            "not a git repository",
+            "fatal: ambiguous argument",
+            "fatal: bad revision",
+            "merge conflict",
+        ),
+    ):
+        return _decision(
+            failure="git_repository_failure",
+            action="check_logs",
+            confidence=0.81,
+            evidence=["observation contains a git repository failure signal"],
+            reason="Inspect the git error and repository state before retrying.",
+        )
+
+    if _contains_any(
+        text,
+        (
+            "dockerfile",
+            "failed to solve",
+            "docker build",
+            "container build",
+            "no such image",
+        ),
+    ):
+        return _decision(
+            failure="container_build_failure",
+            action="check_logs",
+            confidence=0.80,
+            evidence=["observation contains a container build failure signal"],
+            reason="Inspect bounded build logs and referenced Dockerfile metadata.",
+        )
+
+    if _contains_any(
+        text,
+        (
+            "address already in use",
+            "eaddrinuse",
+            "port is already allocated",
+        ),
+    ):
+        return _decision(
+            failure="port_in_use",
+            action="check_port",
+            confidence=0.82,
+            evidence=["observation contains a port collision signal"],
+            reason="Check which local service owns the target port.",
+        )
+
     if _contains_any(text, ("traceback", "error:", "exception", "failed", "failure")):
         return _decision(
             failure="generic_runtime_failure",
