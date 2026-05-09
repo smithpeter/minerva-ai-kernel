@@ -94,6 +94,7 @@ Start here:
 
 - [Minimal Python SDK decision example](examples/minimal_sdk_decision.py)
 - [Agent tool failure guide](examples/agent-tool-failure.md)
+- [Explicit execute-action demo](examples/execute-action-demo.md)
 - [Integration recipes for CI, SDK, and agents](docs/integration-recipes.md)
 - [M1 roadmap task seeds](docs/m1-roadmap-task-seeds.md)
 - [M0 release readiness checklist](docs/m0-release-readiness.md)

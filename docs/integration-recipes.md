@@ -231,6 +231,9 @@ Safety boundaries:
 - CLI integrations can use the same explicit path with
   `minerva execute-action decision.json --observation observation.json --cwd .`.
   `minerva observe --` does not call this command automatically.
+- See the [execute-action demo](../examples/execute-action-demo.md) for an
+  allowed `inspect_dependencies` example and a policy-blocked escalation
+  example.
 - Trust only decisions with `diagnosis.policy_decision.allowed is True`; blocked
   decisions are audit evidence.
 

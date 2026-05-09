@@ -49,7 +49,7 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T41 | #41 | done | Release / Docs | Add Minerva public site artifact and domain cutover runbook |
 | T42 | #42 | done | Release / Integration | Add GitHub Pages deployment workflow for public site |
 | T43 | #43 | done | Security / Kernel | Harden read-only executor path boundaries |
-| T44 | #44 | pending | Docs / Integration | Add CLI execute-action usage examples and docs |
+| T44 | #44 | done | Docs / Integration | Add CLI execute-action usage examples and docs |
 | T45 | #45 | pending | Kernel / Eval | Expand deterministic baseline signature coverage |
 | T46 | #46 | pending | Kernel / Integration | Add local provider health check command |
 | T47 | #47 | pending | Kernel / Daemon | Add minervad health endpoint skeleton |
