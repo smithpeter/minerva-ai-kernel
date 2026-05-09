@@ -69,6 +69,18 @@ class CliTests(unittest.TestCase):
         self.assertIn("Policy decision: blocked", out)
         self.assertIn("Reason: blocked destructive command attempt", out)
 
+    def test_cli_provider_health_outputs_structured_json(self) -> None:
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            with self.assertRaises(SystemExit) as raised:
+                main(["provider-health", "--timeout", "0.001"])
+
+        self.assertEqual(raised.exception.code, 2)
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(payload["schema_version"], "provider_health.v0")
+        self.assertIn(payload["status"], ["unreachable", "invalid_response"])
+        self.assertEqual(payload["reachable"], False)
+
     def test_cli_diagnose_outputs_successful_decision(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             payload_path = self._write_observation(tmpdir)

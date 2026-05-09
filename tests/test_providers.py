@@ -5,7 +5,7 @@ import unittest
 import urllib.error
 from unittest.mock import patch
 
-from minerva_kernel import Decision, MockModelProvider
+from minerva_kernel import Decision, MockModelProvider, check_local_provider_health
 from minerva_kernel.router import LocalLLMRouter
 
 
@@ -21,6 +21,20 @@ class _FakeResponse:
 
     def read(self) -> bytes:
         return json.dumps(self.payload).encode("utf-8")
+
+
+class _RawResponse:
+    def __init__(self, body: bytes) -> None:
+        self.body = body
+
+    def __enter__(self) -> "_RawResponse":
+        return self
+
+    def __exit__(self, exc_type: object, exc: object, traceback: object) -> bool:
+        return False
+
+    def read(self) -> bytes:
+        return self.body
 
 
 class ProviderTests(unittest.TestCase):
@@ -67,6 +81,43 @@ class ProviderTests(unittest.TestCase):
         self.assertEqual(decision.action, "ask_bigger_llm")
         self.assertTrue(decision.escalate)
         self.assertEqual(decision.evidence, ["local LLM request failed"])
+
+    def test_provider_health_reports_reachable_chat_completion_shape(self) -> None:
+        response_payload = {
+            "choices": [{"message": {"content": "{\"ok\": true}"}}],
+        }
+
+        with patch("urllib.request.urlopen", return_value=_FakeResponse(response_payload)):
+            health = check_local_provider_health(
+                base_url="http://localhost:11434/v1/chat/completions",
+                model="local-test-model",
+                timeout=0.1,
+            )
+
+        payload = health.to_dict()
+        self.assertTrue(health.reachable)
+        self.assertEqual(payload["schema_version"], "provider_health.v0")
+        self.assertEqual(payload["status"], "reachable")
+        self.assertEqual(payload["model"], "local-test-model")
+
+    def test_provider_health_reports_unreachable_endpoint(self) -> None:
+        with patch(
+            "urllib.request.urlopen",
+            side_effect=urllib.error.URLError("connection refused"),
+        ):
+            health = check_local_provider_health(timeout=0.1)
+
+        self.assertFalse(health.reachable)
+        self.assertEqual(health.status, "unreachable")
+        self.assertEqual(health.detail, "URLError")
+
+    def test_provider_health_reports_malformed_response(self) -> None:
+        with patch("urllib.request.urlopen", return_value=_RawResponse(b"not json")):
+            health = check_local_provider_health(timeout=0.1)
+
+        self.assertFalse(health.reachable)
+        self.assertEqual(health.status, "invalid_response")
+        self.assertEqual(health.detail, "response body was not JSON")
 
     def test_local_router_falls_back_when_response_is_not_json(self) -> None:
         router = LocalLLMRouter()

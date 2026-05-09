@@ -37,6 +37,7 @@ From a local checkout:
 ```bash
 python3 -m pip install --no-deps .
 minerva doctor
+minerva provider-health
 minerva observe -- python3 -c "import sys; print('example failure', file=sys.stderr); sys.exit(1)"
 python -m minerva_kernel.eval_smoke
 minerva eval-report --format markdown
@@ -46,6 +47,10 @@ minerva eval-report --format markdown
 configured provider, Minerva uses a deterministic CPU-local baseline interpreter
 for common failure signatures. Explicit local providers remain optional, and
 there is no automatic remote LLM fallback.
+
+`minerva provider-health` reports whether an optional local OpenAI-compatible
+provider is reachable. A failed health check does not block the baseline
+interpreter path.
 
 Explicit read-only follow-up is available through `minerva execute-action
 decision.json --observation observation.json --cwd .`. This path is never called

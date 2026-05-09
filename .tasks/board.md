@@ -51,6 +51,6 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T43 | #43 | done | Security / Kernel | Harden read-only executor path boundaries |
 | T44 | #44 | done | Docs / Integration | Add CLI execute-action usage examples and docs |
 | T45 | #45 | done | Kernel / Eval | Expand deterministic baseline signature coverage |
-| T46 | #46 | pending | Kernel / Integration | Add local provider health check command |
+| T46 | #46 | done | Kernel / Integration | Add local provider health check command |
 | T47 | #47 | pending | Kernel / Daemon | Add minervad health endpoint skeleton |
 | T48 | #48 | pending | Ops / AI Team | Add AI-team task seeding and timer runbook |

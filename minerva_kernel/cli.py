@@ -13,6 +13,7 @@ from .executor import execute_action
 from .observe import DEFAULT_TIMEOUT_SECONDS, observe_command, save_run_record
 from .policy import validate_payload
 from .providers import ModelProvider
+from .providers import check_local_provider_health
 from .sdk import Diagnosis, diagnose_file, diagnose_observation
 from .types import Decision, Observation
 
@@ -24,6 +25,26 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
     )
     subparsers = parser.add_subparsers(dest="command")
     subparsers.add_parser("doctor", help="Check local Minerva setup.")
+    provider_health = subparsers.add_parser(
+        "provider-health",
+        help="Check optional local OpenAI-compatible provider reachability.",
+    )
+    provider_health.add_argument(
+        "--base-url",
+        default="http://localhost:11434/v1/chat/completions",
+        help="Local chat completions endpoint to probe.",
+    )
+    provider_health.add_argument(
+        "--model",
+        default="qwen2.5-coder:0.5b-instruct",
+        help="Model name to include in the local health request.",
+    )
+    provider_health.add_argument(
+        "--timeout",
+        type=float,
+        default=2.0,
+        help="Health request timeout in seconds.",
+    )
     diagnose = subparsers.add_parser("diagnose", help="Diagnose a failure JSON file.")
     diagnose.add_argument("path")
     observe = subparsers.add_parser("observe", help="Observe a command failure.")
@@ -88,6 +109,15 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
     if args.command == "doctor":
         print("Minerva doctor: repository skeleton is ready.")
         return
+
+    if args.command == "provider-health":
+        health = check_local_provider_health(
+            base_url=args.base_url,
+            model=args.model,
+            timeout=args.timeout,
+        )
+        print(json.dumps(health.to_dict(), ensure_ascii=True, indent=2, sort_keys=True))
+        raise SystemExit(0 if health.reachable else 2)
 
     if args.command == "diagnose":
         try:

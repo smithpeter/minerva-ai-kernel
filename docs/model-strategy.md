@@ -142,6 +142,12 @@ Remote models are optional L3 escalation targets. They must remain outside the
 minimum path: no automatic remote fallback, no remote key requirement, and no
 failure to run the local observer when remote access is unavailable.
 
+Use `minerva provider-health` to check an optional local OpenAI-compatible
+endpoint. It emits `provider_health.v0` JSON with `reachable`, `status`,
+`base_url`, `model`, and `detail` fields. `unreachable` or `invalid_response`
+means Minerva should stay on the deterministic baseline path unless a caller
+explicitly configures and verifies a provider.
+
 ### L1: Tiny General Agent Controller
 
 Recommended model:
