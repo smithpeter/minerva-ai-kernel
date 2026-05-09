@@ -66,8 +66,8 @@ while [[ "$run_count" -lt "$MAX_TASKS_PER_TICK" ]]; do
     bash scripts/ai-team-autopilot.sh 2>&1 | tee -a "$LOG_FILE"
 
     if [[ "$status" -ne 0 ]]; then
-        printf '\nMinerva AI team tick stopped after %s with status %s\n' "$TASK_ID" "$status" | tee -a "$LOG_FILE"
-        exit "$status"
+        printf '\nMinerva AI team tick paused after %s with status %s. The timer will retry on the next interval.\n' "$TASK_ID" "$status" | tee -a "$LOG_FILE"
+        exit 0
     fi
 done
 
