@@ -9,6 +9,9 @@ from .ci_render import (
     render_ci_artifact_json_from_file,
     render_markdown_summary_from_file,
 )
+from .daemon import DEFAULT_HOST as MINERVAD_DEFAULT_HOST
+from .daemon import DEFAULT_PORT as MINERVAD_DEFAULT_PORT
+from .daemon import serve as serve_minervad
 from .executor import execute_action
 from .observe import DEFAULT_TIMEOUT_SECONDS, observe_command, save_run_record
 from .policy import validate_payload
@@ -25,6 +28,12 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
     )
     subparsers = parser.add_subparsers(dest="command")
     subparsers.add_parser("doctor", help="Check local Minerva setup.")
+    minervad = subparsers.add_parser(
+        "minervad",
+        help="Run the local-only minervad prototype health server.",
+    )
+    minervad.add_argument("--host", default=MINERVAD_DEFAULT_HOST)
+    minervad.add_argument("--port", type=int, default=MINERVAD_DEFAULT_PORT)
     provider_health = subparsers.add_parser(
         "provider-health",
         help="Check optional local OpenAI-compatible provider reachability.",
@@ -108,6 +117,10 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
 
     if args.command == "doctor":
         print("Minerva doctor: repository skeleton is ready.")
+        return
+
+    if args.command == "minervad":
+        serve_minervad(host=args.host, port=args.port)
         return
 
     if args.command == "provider-health":

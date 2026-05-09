@@ -52,6 +52,10 @@ there is no automatic remote LLM fallback.
 provider is reachable. A failed health check does not block the baseline
 interpreter path.
 
+`minerva minervad --host 127.0.0.1 --port 8765` starts the prototype local
+health server. It is not started automatically by CI, `observe`, or the AI-team
+timer.
+
 Explicit read-only follow-up is available through `minerva execute-action
 decision.json --observation observation.json --cwd .`. This path is never called
 automatically by `observe`; it policy-checks the decision again and only gathers
@@ -101,6 +105,7 @@ Start here:
 - [Agent tool failure guide](examples/agent-tool-failure.md)
 - [Explicit execute-action demo](examples/execute-action-demo.md)
 - [Integration recipes for CI, SDK, and agents](docs/integration-recipes.md)
+- [Minervad prototype health endpoint](docs/minervad-prototype.md)
 - [M1 roadmap task seeds](docs/m1-roadmap-task-seeds.md)
 - [M0 release readiness checklist](docs/m0-release-readiness.md)
 - [M0 local release dry-run guide](docs/m0-local-release-dry-run.md)
