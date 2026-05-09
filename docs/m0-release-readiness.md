@@ -158,7 +158,8 @@ Remaining risks:
   this as `local_install_backend` for the current interpreter or a fresh venv.
 - The smoke eval is a narrow wiring signal, not a benchmark or production reliability claim.
 - Redaction v0 is a basic safety layer, not a full DLP system.
-- M0 behavior without a local model provider intentionally demonstrates policy-blocked escalation rather than remote fallback.
+- M0 behavior without a configured model provider uses the deterministic
+  CPU-local baseline interpreter rather than remote fallback.
 
 Launch blockers:
 

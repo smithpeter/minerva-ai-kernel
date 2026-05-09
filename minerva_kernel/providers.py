@@ -80,9 +80,20 @@ class LocalOpenAICompatibleProvider(ModelProvider):
                 reason=str(exc),
             )
 
-        content = payload["choices"][0]["message"]["content"]
-        parsed = json.loads(content)
-        return Decision.from_dict(parsed)
+        try:
+            content = payload["choices"][0]["message"]["content"]
+            parsed = json.loads(content)
+            return Decision.from_dict(parsed)
+        except (KeyError, IndexError, TypeError, json.JSONDecodeError, ValueError) as exc:
+            return Decision(
+                confidence=1.0,
+                failure="local_llm_invalid_response",
+                action="ask_bigger_llm",
+                risk="low",
+                escalate=True,
+                evidence=["local LLM response was not a valid decision"],
+                reason=str(exc),
+            )
 
 
 class MockModelProvider(ModelProvider):

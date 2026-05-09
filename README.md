@@ -42,9 +42,15 @@ python -m minerva_kernel.eval_smoke
 minerva eval-report --format markdown
 ```
 
-`minerva observe --` saves a run record under `.minerva/runs/`. If no local
-OpenAI-compatible provider is running, Minerva still captures the command output
-and policy-blocks escalation instead of requiring a remote LLM.
+`minerva observe --` saves a run record under `.minerva/runs/`. With no
+configured provider, Minerva uses a deterministic CPU-local baseline interpreter
+for common failure signatures. Explicit local providers remain optional, and
+there is no automatic remote LLM fallback.
+
+Explicit read-only follow-up is available through `minerva execute-action
+decision.json --observation observation.json --cwd .`. This path is never called
+automatically by `observe`; it policy-checks the decision again and only gathers
+bounded diagnostic evidence.
 
 ## First Milestone
 

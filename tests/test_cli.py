@@ -149,6 +149,65 @@ class CliTests(unittest.TestCase):
         self.assertNotIn(token, prompt_text)
         self.assertIn("[REDACTED:bearer_token]", prompt_text)
 
+    def test_cli_execute_action_outputs_read_only_executor_observation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            Path(tmpdir, "pyproject.toml").write_text("[project]\n", encoding="utf-8")
+            decision_path = Path(tmpdir) / "decision.json"
+            decision_path.write_text(
+                json.dumps(
+                    Decision(
+                        failure="missing_dependency",
+                        action="inspect_dependencies",
+                        confidence=0.91,
+                        risk="low",
+                        escalate=False,
+                        evidence=["stderr contains ModuleNotFoundError"],
+                    ).to_dict()
+                ),
+                encoding="utf-8",
+            )
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                with self.assertRaises(SystemExit) as raised:
+                    main(["execute-action", str(decision_path), "--cwd", tmpdir])
+
+        self.assertEqual(raised.exception.code, 0)
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(payload["schema_version"], "observation.v0")
+        self.assertEqual(payload["source"], "kernel_executor")
+        self.assertEqual(payload["command"], "executor:inspect_dependencies")
+        self.assertIn("pyproject.toml", payload["stdout_tail"])
+        self.assertEqual(payload["runtime"]["policy_allowed"], True)
+
+    def test_cli_execute_action_exits_nonzero_when_policy_blocks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            decision_path = Path(tmpdir) / "decision.json"
+            decision_path.write_text(
+                json.dumps(
+                    Decision(
+                        failure="needs_escalation",
+                        action="ask_user",
+                        confidence=0.91,
+                        risk="low",
+                        escalate=True,
+                        evidence=["operator needed"],
+                    ).to_dict()
+                ),
+                encoding="utf-8",
+            )
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                with self.assertRaises(SystemExit) as raised:
+                    main(["execute-action", str(decision_path), "--cwd", tmpdir])
+
+        self.assertEqual(raised.exception.code, 2)
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(payload["source"], "kernel_executor")
+        self.assertEqual(payload["runtime"]["policy_allowed"], False)
+        self.assertIn("policy blocked executor action", payload["stderr_tail"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -27,7 +27,7 @@ check_forbidden() {
 
 check_forbidden "VoxSign Python import" '(^|[^A-Za-z0-9_])(from|import)[[:space:]]+voxsign([[:space:].]|$)' minerva_kernel tests evals examples adapters policies taxonomies
 check_forbidden "VOXSIGN environment namespace" 'VOXSIGN_' minerva_kernel tests evals examples adapters policies taxonomies .github
-check_forbidden "VoxSign state directory" '(\.voxsign|~/\.voxsign|/Users/zouyongming/\.voxsign)' minerva_kernel tests evals examples adapters policies taxonomies .github
+check_forbidden "VoxSign state directory" '(^|[^A-Za-z0-9._-])(\.voxsign|~/\.voxsign|/Users/zouyongming/\.voxsign)(/|[^A-Za-z0-9._-]|$)' minerva_kernel tests evals examples adapters policies taxonomies .github
 check_forbidden "VoxSign forbidden root outside boundary docs" '/Users/zouyongming/VoxSign' minerva_kernel tests evals examples adapters policies taxonomies .github
 
 if [[ "$fail" -ne 0 ]]; then

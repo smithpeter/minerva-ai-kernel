@@ -9,10 +9,12 @@ from .ci_render import (
     render_ci_artifact_json_from_file,
     render_markdown_summary_from_file,
 )
+from .executor import execute_action
 from .observe import DEFAULT_TIMEOUT_SECONDS, observe_command, save_run_record
 from .policy import validate_payload
 from .providers import ModelProvider
 from .sdk import Diagnosis, diagnose_file, diagnose_observation
+from .types import Decision, Observation
 
 
 def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -> None:
@@ -51,6 +53,20 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
         help="Override the artifact created_at timestamp for reproducible fixtures.",
     )
     ci_artifact.add_argument("path")
+    execute = subparsers.add_parser(
+        "execute-action",
+        help="Explicitly run a policy-gated read-only diagnostic action.",
+    )
+    execute.add_argument("decision_path")
+    execute.add_argument(
+        "--observation",
+        help="Optional source observation.v0 JSON for bounded follow-up evidence.",
+    )
+    execute.add_argument(
+        "--cwd",
+        default=".",
+        help="Directory to inspect. Defaults to the current directory.",
+    )
     eval_report = subparsers.add_parser(
         "eval-report",
         help="Emit deterministic M1 eval metrics from local fixtures.",
@@ -136,6 +152,32 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
             raise SystemExit(1) from exc
         return
 
+    if args.command == "execute-action":
+        try:
+            decision = _load_decision(args.decision_path)
+            source_observation = (
+                _load_observation(args.observation) if args.observation else None
+            )
+            executor_observation = execute_action(
+                decision,
+                cwd=args.cwd,
+                observation=source_observation,
+            )
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            print(f"Execute action failed: {exc}", file=sys.stderr)
+            raise SystemExit(1) from exc
+
+        print(
+            json.dumps(
+                executor_observation.to_dict(),
+                ensure_ascii=True,
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        policy_allowed = bool(executor_observation.runtime.get("policy_allowed", True))
+        raise SystemExit(0 if policy_allowed else 2)
+
     if args.command == "eval-report":
         from .eval_report import render_m1_eval_report
 
@@ -162,6 +204,20 @@ def _normalize_observed_command(values: list[str]) -> list[str]:
     if not command:
         raise ValueError("observe requires a command after --")
     return command
+
+
+def _load_decision(path: str | Path) -> Decision:
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("decision JSON must be an object")
+    return Decision.from_dict(payload)
+
+
+def _load_observation(path: str | Path) -> Observation:
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("observation JSON must be an object")
+    return Observation.from_dict(payload)
 
 
 def _print_diagnosis(diagnosis: Diagnosis) -> None:

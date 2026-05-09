@@ -29,7 +29,18 @@ class InstallEntrypointSmokeTests(unittest.TestCase):
             tmp_path = Path(tmpdir)
             venv_path = tmp_path / "venv"
 
-            self._run([sys.executable, "-m", "venv", str(venv_path)], timeout=120)
+            venv_result = self._run(
+                [sys.executable, "-m", "venv", str(venv_path)],
+                timeout=120,
+                fail_on_error=False,
+            )
+            if venv_result.returncode != 0 and _looks_like_missing_ensurepip(
+                venv_result
+            ):
+                self.skipTest("python venv/ensurepip is unavailable in this environment")
+            if venv_result.returncode != 0:
+                self.fail(_format_command_failure(venv_result))
+
             venv_python = _venv_executable(venv_path, "python")
             _ensure_offline_setuptools(venv_python)
 
@@ -77,6 +88,7 @@ class InstallEntrypointSmokeTests(unittest.TestCase):
         *,
         cwd: str | Path | None = None,
         timeout: int = 60,
+        fail_on_error: bool = True,
     ) -> subprocess.CompletedProcess[str]:
         result = subprocess.run(
             args,
@@ -87,13 +99,22 @@ class InstallEntrypointSmokeTests(unittest.TestCase):
             timeout=timeout,
             check=False,
         )
-        if result.returncode != 0:
-            self.fail(
-                f"command failed with exit code {result.returncode}: {args}\n"
-                f"stdout:\n{result.stdout}\n"
-                f"stderr:\n{result.stderr}"
-            )
+        if fail_on_error and result.returncode != 0:
+            self.fail(_format_command_failure(result))
         return result
+
+
+def _format_command_failure(result: subprocess.CompletedProcess[str]) -> str:
+    return (
+        f"command failed with exit code {result.returncode}: {result.args}\n"
+        f"stdout:\n{result.stdout}\n"
+        f"stderr:\n{result.stderr}"
+    )
+
+
+def _looks_like_missing_ensurepip(result: subprocess.CompletedProcess[str]) -> bool:
+    combined = f"{result.stdout}\n{result.stderr}".lower()
+    return "ensurepip is not available" in combined or "python3-venv" in combined
 
 
 def _ensure_offline_setuptools(venv_python: Path) -> None:

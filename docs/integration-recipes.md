@@ -116,9 +116,10 @@ Expected failure modes:
 
 - If the observed command fails, the CI job fails with that command's exit code
   after writing diagnostic evidence.
-- If Minerva cannot reach a local model provider, the default provider records a
-  `local_llm_unavailable` decision that policy blocks as escalation; the record
-  is still useful as local diagnostic evidence.
+- If no provider is configured, the default SDK/CLI path uses the deterministic
+  CPU-local baseline interpreter. If an explicitly configured local provider is
+  unreachable, it records `local_llm_unavailable`, which policy blocks as
+  escalation.
 - If the observed command times out, the observation records exit code `124` and
   `runtime.timed_out: true`.
 - If Minerva cannot write a run record, the step writes a short summary and exits
@@ -223,6 +224,13 @@ Safety boundaries:
   redacts provider decisions before returning them.
 - Treat `diagnosis.decision.action` as advisory. The SDK does not execute the
   action.
+- When a caller explicitly wants bounded follow-up evidence, use
+  `execute_action(decision, cwd, observation)` after checking
+  `diagnosis.policy_decision.allowed`. The executor is read-only: it does not
+  run shell commands, write files, install packages, or repair systems.
+- CLI integrations can use the same explicit path with
+  `minerva execute-action decision.json --observation observation.json --cwd .`.
+  `minerva observe --` does not call this command automatically.
 - Trust only decisions with `diagnosis.policy_decision.allowed is True`; blocked
   decisions are audit evidence.
 

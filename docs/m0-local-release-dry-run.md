@@ -91,14 +91,15 @@ Policy decision reason: ...
 Saved: .minerva/runs/<timestamp>-<id>.json
 ```
 
-If no local OpenAI-compatible provider is running, the M0 boundary path is
-expected to be policy-blocked rather than falling back to a remote LLM:
+If no local OpenAI-compatible provider is configured, the M0 boundary path uses
+the deterministic CPU-local baseline interpreter rather than falling back to a
+remote LLM:
 
 ```text
-Failure: local_llm_unavailable
-Action: ask_bigger_llm
-Policy decision: blocked
-Policy decision reason: action is not read-only: ask_bigger_llm
+Failure: missing_dependency
+Action: inspect_dependencies
+Policy decision: allowed
+Policy decision reason: allowed by read-only policy
 ```
 
 Expected artifacts:

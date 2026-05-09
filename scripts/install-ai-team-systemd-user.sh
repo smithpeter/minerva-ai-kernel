@@ -18,7 +18,7 @@ Type=oneshot
 WorkingDirectory=${ROOT}
 Environment=MINERVA_PROJECT_ROOT=${ROOT}
 Environment=MINERVA_AI_EXECUTOR=codex
-Environment=PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+Environment=PATH=${HOME}/bin:${HOME}/.local/bin:${HOME}/.npm-global/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 ExecStart=/usr/bin/env bash ${ROOT}/scripts/ai-team-tick.sh
 SERVICE
 

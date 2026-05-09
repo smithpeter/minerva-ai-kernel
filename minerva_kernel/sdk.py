@@ -4,6 +4,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+from .baseline import propose_baseline_decision
 from .planner import build_prompt
 from .policy import validate_action
 from .providers import ModelProvider
@@ -41,8 +42,11 @@ def diagnose_observation(
     observation: Observation, provider: ModelProvider | None = None
 ) -> Diagnosis:
     redacted_observation = observation.redacted()
-    messages = build_prompt(redacted_observation)
-    decision = LocalLLMRouter(provider=provider).propose(messages)
+    if provider is None:
+        decision = propose_baseline_decision(redacted_observation).redacted()
+    else:
+        messages = build_prompt(redacted_observation)
+        decision = LocalLLMRouter(provider=provider).propose(messages)
     policy_decision = validate_action(decision)
     redactions = _merge_optional_redactions(
         redacted_observation.redactions,

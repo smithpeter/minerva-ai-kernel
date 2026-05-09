@@ -68,6 +68,55 @@ class ProviderTests(unittest.TestCase):
         self.assertTrue(decision.escalate)
         self.assertEqual(decision.evidence, ["local LLM request failed"])
 
+    def test_local_router_falls_back_when_response_is_not_json(self) -> None:
+        router = LocalLLMRouter()
+        response_payload = {
+            "choices": [
+                {
+                    "message": {
+                        "content": "not json",
+                    }
+                }
+            ]
+        }
+
+        with patch("urllib.request.urlopen", return_value=_FakeResponse(response_payload)):
+            decision = router.propose([{"role": "user", "content": "diagnose"}])
+
+        self.assertEqual(decision.failure, "local_llm_invalid_response")
+        self.assertEqual(decision.action, "ask_bigger_llm")
+        self.assertTrue(decision.escalate)
+        self.assertEqual(
+            decision.evidence,
+            ["local LLM response was not a valid decision"],
+        )
+
+    def test_local_router_falls_back_when_response_schema_is_invalid(self) -> None:
+        router = LocalLLMRouter()
+        response_payload = {
+            "choices": [
+                {
+                    "message": {
+                        "content": json.dumps(
+                            {
+                                "failure": "missing action",
+                                "confidence": 0.9,
+                                "risk": "low",
+                                "evidence": ["invalid fixture"],
+                            }
+                        ),
+                    }
+                }
+            ]
+        }
+
+        with patch("urllib.request.urlopen", return_value=_FakeResponse(response_payload)):
+            decision = router.propose([{"role": "user", "content": "diagnose"}])
+
+        self.assertEqual(decision.failure, "local_llm_invalid_response")
+        self.assertEqual(decision.action, "ask_bigger_llm")
+        self.assertTrue(decision.escalate)
+
     def test_provider_redacts_before_and_after_local_call(self) -> None:
         token = "abcdefghijklmnopqrstuvwxyz123456"
         captured: dict[str, object] = {}

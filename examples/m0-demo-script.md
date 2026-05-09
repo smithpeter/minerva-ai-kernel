@@ -53,30 +53,30 @@ What to point out:
 - Minerva captures stdout/stderr tails, exit code, runtime metadata, and policy summary.
 - Minerva saves a run record before returning.
 
-If no local model provider is running, the current M0 boundary demo is expected to
-show policy blocking escalation:
+With no configured model provider, the current M0 boundary demo uses the
+deterministic CPU-local baseline interpreter:
 
 ```text
-Failure: local_llm_unavailable
-Action: ask_bigger_llm
-Confidence: 1.0
+Failure: missing_dependency
+Action: inspect_dependencies
+Confidence: 0.89
 Risk: low
-Escalation: true
-Policy decision: blocked
-Policy decision reason: action is not read-only: ask_bigger_llm
+Escalation: false
+Policy decision: allowed
+Policy decision reason: allowed by read-only policy
 Saved: .minerva/runs/<timestamp>-<id>.json
 ```
 
 Speaker:
 
 ```text
-This is a useful safety result. The observed command record was saved, but the
-policy runtime blocked the model-side escalation action. M0 does not silently
-call a remote LLM and does not repair the machine.
+The observed command record was saved, and Minerva produced a structured
+read-only diagnostic without requiring a local model server or a remote LLM.
+M0 still does not repair the machine.
 ```
 
-When a CPU-local provider returns a low-risk read-only action, the policy line
-should instead show:
+When a CPU-local provider is explicitly configured, it can replace the baseline
+decision as long as the result still passes policy:
 
 ```text
 Policy decision: allowed

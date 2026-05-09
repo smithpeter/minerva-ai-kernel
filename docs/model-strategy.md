@@ -108,32 +108,35 @@ decision = LocalLLMRouter().propose(messages)
 
 ### No-Provider Fallback
 
-If the local endpoint is not running, refuses the connection, or times out,
-`LocalOpenAICompatibleProvider` returns a structured decision instead of calling
-a remote model:
+If no provider is configured in the SDK/CLI path, Minerva uses a deterministic
+CPU-local baseline interpreter for common failure signatures instead of calling a
+remote model:
 
 ```json
 {
   "schema_version": "decision.v0",
-  "failure": "local_llm_unavailable",
-  "action": "ask_bigger_llm",
-  "confidence": 1.0,
+  "failure": "missing_dependency",
+  "action": "inspect_dependencies",
+  "confidence": 0.89,
   "risk": "low",
-  "escalate": true,
-  "evidence": ["local LLM request failed"]
+  "escalate": false,
+  "evidence": ["observation contains a missing dependency signal"]
 }
 ```
 
-In the CLI path, Minerva still captures and saves the observation/run record.
-The read-only policy blocks `ask_bigger_llm`, so the minimum path is safe even
-without a model:
+In the CLI path, Minerva captures and saves the observation/run record, then
+policy-checks the baseline decision:
 
 ```text
-Failure: local_llm_unavailable
-Action: ask_bigger_llm
-Policy decision: blocked
-Policy decision reason: action is not read-only: ask_bigger_llm
+Failure: missing_dependency
+Action: inspect_dependencies
+Policy decision: allowed
+Policy decision reason: allowed by read-only policy
 ```
+
+If an explicitly configured local OpenAI-compatible endpoint is unavailable,
+`LocalOpenAICompatibleProvider` still returns `local_llm_unavailable` with
+`ask_bigger_llm`; the read-only policy blocks that escalation.
 
 Remote models are optional L3 escalation targets. They must remain outside the
 minimum path: no automatic remote fallback, no remote key requirement, and no
