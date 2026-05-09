@@ -122,6 +122,7 @@ Start here:
 - [Questions and requirements](docs/questions-and-requirements.md)
 - [Execution plan and founder role](docs/execution-plan-and-founder-role.md)
 - [AI team execution system](docs/ai-team-execution-system.md)
+- [AI team timer runbook](docs/ai-team-timer-runbook.md)
 - [Most important next step](docs/most-important-next-step.md)
 - [GitHub issues](docs/github-issues.md)
 - [Shared tools, isolated state](docs/shared-tools-isolated-state.md)
@@ -200,6 +201,7 @@ Minerva has a local task board in `.tasks/` and a scoped agent loop:
 
 ```bash
 bash scripts/minerva-ai-team-status.sh
+bash scripts/ai-team-preflight.sh
 bash scripts/check-project-boundary.sh
 bash scripts/check-contamination.sh
 bash scripts/agent-loop.sh T1

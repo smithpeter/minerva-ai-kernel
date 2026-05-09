@@ -53,4 +53,4 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T45 | #45 | done | Kernel / Eval | Expand deterministic baseline signature coverage |
 | T46 | #46 | done | Kernel / Integration | Add local provider health check command |
 | T47 | #47 | done | Kernel / Daemon | Add minervad health endpoint skeleton |
-| T48 | #48 | pending | Ops / AI Team | Add AI-team task seeding and timer runbook |
+| T48 | #48 | done | Ops / AI Team | Add AI-team task seeding and timer runbook |
