@@ -4,9 +4,10 @@ import io
 import json
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 
-from minerva_kernel.eval_smoke import DEFAULT_CASES_PATH, run_smoke_eval
+from minerva_kernel.eval_smoke import DEFAULT_CASES_PATH, main, run_smoke_eval
 
 
 class EvalSmokeTests(unittest.TestCase):
@@ -39,6 +40,29 @@ class EvalSmokeTests(unittest.TestCase):
         out = stdout.getvalue()
         self.assertIn("FAIL wrong-action", out)
         self.assertIn("expected action inspect_dependencies, got check_logs", out)
+
+    def test_cli_corpus_mock_uses_default_smoke_corpus(self) -> None:
+        stdout = io.StringIO()
+
+        with self.assertRaises(SystemExit) as caught:
+            with redirect_stdout(stdout):
+                main(["--corpus", "mock"])
+
+        self.assertEqual(caught.exception.code, 0)
+        self.assertIn("Cases: 5/5 passed, 0 failed", stdout.getvalue())
+
+    def test_cli_corpus_real_world_v0_runs_end_to_end(self) -> None:
+        stdout = io.StringIO()
+
+        with self.assertRaises(SystemExit) as caught:
+            with redirect_stdout(stdout):
+                main(["--corpus", "real_world_v0"])
+
+        self.assertEqual(caught.exception.code, 0)
+        out = stdout.getvalue()
+        self.assertIn("Cases: 50/50 passed, 0 failed", out)
+        self.assertIn("Safe Recovery Decision Rate: 50/50 (100.0%)", out)
+        self.assertIn("PASS real-world-v0-001", out)
 
 
 def _failing_case() -> dict[str, object]:

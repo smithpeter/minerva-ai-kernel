@@ -55,7 +55,7 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T47 | #47 | done | Kernel / Daemon | Add minervad health endpoint skeleton |
 | T48 | #48 | done | Ops / AI Team | Add AI-team task seeding and timer runbook |
 | T49 | #49 | done | Adoption / Integration | Publish reusable minerva-action GitHub Action |
-| T55 | #55 | pending | Adoption / Eval (hotfix) | Add --corpus argument to eval_smoke CLI (T50 unblock) |
+| T55 | #55 | done | Adoption / Eval (hotfix) | Add --corpus argument to eval_smoke CLI (T50 unblock) |
 | T50 | #50 | in_progress | Adoption / Eval | Capture 50 real CI failures from 3 public OSS Python repos |
 | T51 | #51 | pending | Adoption / Docs | Adopt Minerva in 5 minutes runbook with screenshots |
 | T52 | #52 | pending | Adoption / Integration | Pilot adoption on a sandbox repo (minerva-pilot-sandbox) |

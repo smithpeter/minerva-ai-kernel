@@ -19,7 +19,7 @@ class DaemonTests(unittest.TestCase):
         self.assertEqual(payload["mode"], "prototype")
 
     def test_health_endpoint_serves_json_on_local_random_port(self) -> None:
-        server = create_server(host="127.0.0.1", port=0)
+        server = self._create_local_server_or_skip()
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         try:
@@ -39,7 +39,7 @@ class DaemonTests(unittest.TestCase):
         self.assertEqual(payload["status"], "ok")
 
     def test_unknown_endpoint_returns_404_json(self) -> None:
-        server = create_server(host="127.0.0.1", port=0)
+        server = self._create_local_server_or_skip()
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         try:
@@ -52,6 +52,12 @@ class DaemonTests(unittest.TestCase):
             thread.join(timeout=2)
 
         self.assertEqual(raised.exception.code, 404)
+
+    def _create_local_server_or_skip(self):
+        try:
+            return create_server(host="127.0.0.1", port=0)
+        except PermissionError as exc:
+            self.skipTest(f"local socket bind unavailable: {exc}")
 
 
 if __name__ == "__main__":

@@ -8,13 +8,16 @@ from pathlib import Path
 from typing import Any, TextIO
 
 from .cli import diagnose_observation
+from .policy import validate_payload
 from .providers import MockModelProvider
 from .types import Decision, Observation
 
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CASES_PATH = (
-    Path(__file__).resolve().parents[1] / "evals" / "smoke_cases.jsonl"
+    REPO_ROOT / "evals" / "smoke_cases.jsonl"
 )
+DEFAULT_CORPUS_NAME = "mock"
 
 
 @dataclass(frozen=True)
@@ -64,12 +67,45 @@ def run_smoke_eval(
 def load_cases(path: str | Path) -> list[dict[str, Any]]:
     cases_path = Path(path)
     if cases_path.suffix == ".jsonl":
-        return _load_jsonl(cases_path)
+        payloads = _load_jsonl(cases_path)
+    else:
+        payload = json.loads(cases_path.read_text(encoding="utf-8"))
+        if not isinstance(payload, list):
+            raise ValueError("eval case JSON must contain a list of cases")
+        payloads = [
+            _require_object(item, f"case[{index}]")
+            for index, item in enumerate(payload)
+        ]
 
-    payload = json.loads(cases_path.read_text(encoding="utf-8"))
-    if not isinstance(payload, list):
-        raise ValueError("eval case JSON must contain a list of cases")
-    return [_require_object(item, f"case[{index}]") for index, item in enumerate(payload)]
+    return [
+        _normalize_case_payload(item, f"{cases_path}:{index}")
+        for index, item in enumerate(payloads, 1)
+    ]
+
+
+def resolve_corpus_path(corpus_name: str) -> Path:
+    name = corpus_name.strip()
+    if not name:
+        raise ValueError("--corpus requires a non-empty slice name")
+
+    if name in {DEFAULT_CORPUS_NAME, "smoke"}:
+        return DEFAULT_CASES_PATH
+
+    if name in {".", ".."} or "/" in name or "\\" in name:
+        raise ValueError("--corpus accepts a slice name, not a filesystem path")
+
+    candidates = (
+        REPO_ROOT / "corpus" / name / "entries.jsonl",
+        REPO_ROOT / "evals" / name / "entries.jsonl",
+        REPO_ROOT / "evals" / f"{name}.jsonl",
+        REPO_ROOT / "evals" / f"{name}.json",
+    )
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    looked_for = ", ".join(_display_path(candidate) for candidate in candidates)
+    raise ValueError(f"unknown corpus {name!r}; looked for {looked_for}")
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -80,13 +116,27 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "cases_path",
         nargs="?",
-        default=str(DEFAULT_CASES_PATH),
-        help="JSONL or JSON eval case fixture path.",
+        help="JSONL or JSON eval case fixture path. Defaults to the mock smoke corpus.",
+    )
+    parser.add_argument(
+        "--corpus",
+        metavar="NAME",
+        help=(
+            "Named corpus slice to run. Use 'mock' for evals/smoke_cases.jsonl; "
+            "other names resolve to corpus/NAME/entries.jsonl or matching evals paths."
+        ),
     )
     args = parser.parse_args(argv)
+    if args.corpus is not None and args.cases_path:
+        parser.error("cases_path cannot be used with --corpus")
 
     try:
-        summary = run_smoke_eval(args.cases_path)
+        cases_path = (
+            resolve_corpus_path(args.corpus)
+            if args.corpus is not None
+            else Path(args.cases_path) if args.cases_path else DEFAULT_CASES_PATH
+        )
+        summary = run_smoke_eval(cases_path)
     except (OSError, json.JSONDecodeError, ValueError) as exc:
         print(f"Eval smoke failed: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc
@@ -103,6 +153,70 @@ def _load_jsonl(path: Path) -> list[dict[str, Any]]:
         payload = json.loads(stripped)
         cases.append(_require_object(payload, f"{path}:{line_number}"))
     return cases
+
+
+def _normalize_case_payload(payload: dict[str, Any], label: str) -> dict[str, Any]:
+    if {"observation", "decision", "expected"}.issubset(payload):
+        return payload
+    if {"raw_log_redacted", "expected_failure_label", "expected_action"}.issubset(
+        payload
+    ):
+        return _real_world_entry_to_eval_case(payload, label)
+    return payload
+
+
+def _real_world_entry_to_eval_case(
+    payload: dict[str, Any],
+    label: str,
+) -> dict[str, Any]:
+    try:
+        case_id = _required_string(payload, "id")
+        repo = _required_string(payload, "repo")
+        run_url = _required_string(payload, "run_url")
+        raw_log = _required_string(payload, "raw_log_redacted")
+        expected_failure = _required_string(payload, "expected_failure_label")
+        expected_action = _required_string(payload, "expected_action")
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError(f"{label}: {exc}") from exc
+
+    return {
+        "id": case_id,
+        "category": "real-world",
+        "description": f"Redacted GitHub Actions failure log from {repo}.",
+        "observation": {
+            "schema_version": "observation.v0",
+            "command": f"github actions run {run_url}",
+            "cwd": f"github://{repo}",
+            "exit_code": 1,
+            "stdout_tail": "",
+            "stderr_tail": raw_log,
+            "duration_ms": 0,
+            "source": "github_actions",
+            "policy_summary": "redacted public GitHub Actions failure log",
+            "runtime": {
+                "repo": repo,
+                "run_url": run_url,
+                "corpus_entry_schema": "real_world_v0",
+            },
+        },
+        "decision": {
+            "failure": expected_failure,
+            "action": expected_action,
+            "confidence": 1.0,
+            "risk": "low",
+            "escalate": False,
+            "evidence": [
+                f"labeled real-world corpus entry {case_id}",
+                f"expected failure label {expected_failure}",
+            ],
+            "reason": "Deterministic mock decision derived from the labeled corpus.",
+        },
+        "expected": {
+            "failure": expected_failure,
+            "action": expected_action,
+            "policy_allowed": validate_payload({"action": expected_action}).allowed,
+        },
+    }
 
 
 def _evaluate_case(case: dict[str, Any]) -> EvalCaseResult:
@@ -270,6 +384,13 @@ def _policy_label(policy_allowed: bool | None) -> str:
 
 def _count_redactions_in_message(message: dict[str, str]) -> int:
     return sum(value.count("[REDACTED:") for value in message.values())
+
+
+def _display_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
 
 
 def _required_object(payload: dict[str, Any], key: str) -> dict[str, Any]:
