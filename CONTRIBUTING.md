@@ -2,6 +2,8 @@
 
 Minerva is issue-driven.
 
+Project maintainer contact: `maintainers@minervakernel.com`.
+
 Every contribution should include at least one of:
 
 - unit test

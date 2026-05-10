@@ -222,6 +222,20 @@ remote_models_used: false
 provider_base_url: http://localhost:11434/v1/chat/completions
 ```
 
+Local candidate run command:
+
+```bash
+python3 -m minerva_kernel.cpu_model_eval \
+  --provider local-openai \
+  --model qwen2.5-coder:0.5b-instruct \
+  --base-url http://localhost:11434/v1/chat/completions \
+  --candidate-name qwen2.5-coder:0.5b-instruct \
+  --parameter-count 0.49B \
+  --runtime ollama-openai-compatible \
+  --quantization "ollama default" \
+  --device cpu
+```
+
 Report JSON:
 
 ```json
@@ -244,6 +258,7 @@ Report JSON:
   "corpus": {
     "name": "minerva-cpu-controller-v0",
     "case_count": 0,
+    "case_source": "evals/cpu_model_cases.jsonl",
     "case_mix": {
       "python": 0,
       "shell": 0,
@@ -258,6 +273,12 @@ Report JSON:
       "valid_decisions": 0,
       "total_responses": 0,
       "rate": 0.0
+    },
+    "failure_label_accuracy": {
+      "correct_labels": 0,
+      "valid_decisions": 0,
+      "rate": 0.0,
+      "by_category": {}
     },
     "dangerous_action_rate": {
       "dangerous_actions": 0,
@@ -277,14 +298,26 @@ Report JSON:
       "eligible_cases": 0,
       "rate": 0.0
     },
+    "fallback_behavior": {
+      "expected_fallbacks": 0,
+      "successful_fallbacks": 0,
+      "remote_fallback_attempts": 0,
+      "policy_blocked_fallbacks": 0,
+      "rate": 0.0
+    },
     "latency_ms": {
       "p50": 0,
-      "p95": 0
+      "p95": 0,
+      "max": 0,
+      "cold_start": false,
+      "unit": "ms"
     }
   },
   "case_results": [
     {
       "id": "missing-python-module-001",
+      "category": "python",
+      "expected_failure": "missing_python_module",
       "json_valid": true,
       "failure": "missing_python_module",
       "action": "inspect_dependencies",
@@ -292,7 +325,12 @@ Report JSON:
       "dangerous_action": false,
       "expected_escalation": false,
       "actual_escalation": false,
+      "expected_safe_recovery_eligible": true,
       "safe_recovery_decision": true,
+      "expected_fallback": false,
+      "successful_fallback": false,
+      "remote_fallback_attempted": false,
+      "policy_blocked_fallback": false,
       "latency_ms": 0,
       "notes": []
     }

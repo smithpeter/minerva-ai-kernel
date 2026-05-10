@@ -7,6 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = ROOT / "models" / "cpu_model_candidates.json"
+ARTIFACT_EXAMPLE_PATH = ROOT / "evals" / "cpu_model_report_artifact.example.json"
 
 
 class CPUModelCandidateRegistryTests(unittest.TestCase):
@@ -83,6 +84,38 @@ class CPUModelCandidateRegistryTests(unittest.TestCase):
             "LocalOpenAICompatibleProvider",
         )
 
+    def test_example_eval_artifact_contract_is_not_a_benchmark_claim(self) -> None:
+        registry = _load_registry()
+        artifact = _load_json(ARTIFACT_EXAMPLE_PATH)
+        candidate_ids = {candidate["id"] for candidate in registry["candidates"]}
+
+        self.assertEqual(
+            artifact["schema_version"],
+            "minerva.cpu_model_eval_artifact.v0",
+        )
+        self.assertEqual(artifact["artifact_status"], "example_contract_not_benchmark")
+        self.assertIn(artifact["registry_candidate_id"], candidate_ids)
+        self.assertFalse(artifact["benchmark_claim"])
+        self.assertFalse(artifact["fixture_report"])
+        self.assertFalse(artifact["model_weights_shipped_by_minerva"])
+        self.assertFalse(artifact["models_downloaded_by_artifact"])
+        self.assertIn("--provider", artifact["command"])
+        self.assertIn("local-openai", artifact["command"])
+
+        evidence = artifact["evidence_requirements"]
+        self.assertEqual(evidence["minimum_case_count"], 30)
+        self.assertEqual(
+            evidence["scoring_contract"],
+            registry["scoring_contract"],
+        )
+        self.assertFalse(evidence["gpu_used"])
+        self.assertFalse(evidence["remote_models_used"])
+        self.assertIn("fallback_behavior", evidence["required_metrics"])
+        self.assertEqual(
+            sorted(evidence["required_decisions"]),
+            ["promote", "reject", "retest"],
+        )
+
     def assert_required_string(self, payload: dict[str, object], key: str) -> None:
         self.assertIn(key, payload)
         self.assertIsInstance(payload[key], str)
@@ -90,10 +123,17 @@ class CPUModelCandidateRegistryTests(unittest.TestCase):
 
 
 def _load_registry() -> dict[str, object]:
-    with REGISTRY_PATH.open(encoding="utf-8") as handle:
-        payload = json.load(handle)
+    payload = _load_json(REGISTRY_PATH)
     if not isinstance(payload, dict):
         raise AssertionError("registry root must be a JSON object")
+    return payload
+
+
+def _load_json(path: Path) -> dict[str, object]:
+    with path.open(encoding="utf-8") as handle:
+        payload = json.load(handle)
+    if not isinstance(payload, dict):
+        raise AssertionError(f"{path} root must be a JSON object")
     return payload
 
 

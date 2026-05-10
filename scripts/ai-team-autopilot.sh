@@ -9,7 +9,8 @@ set -euo pipefail
 # - changed files must stay inside the task's Allowed Files plus task metadata;
 # - it runs boundary, contamination, compile, and unit tests before committing.
 
-ROOT="${MINERVA_PROJECT_ROOT:-/Users/zouyongming/projects/minerva-ai-kernel}"
+ROOT="${MINERVA_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+export MINERVA_PROJECT_ROOT="$ROOT"
 cd "$ROOT"
 
 bash scripts/check-project-boundary.sh >/dev/null

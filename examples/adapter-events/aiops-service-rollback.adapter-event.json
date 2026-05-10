@@ -1,0 +1,59 @@
+{
+  "schema_version": "minerva.adapter_event.v0",
+  "producer": {
+    "adapter": "aiops-webhook-example",
+    "version": "0.1.0"
+  },
+  "platform": {
+    "type": "aiops",
+    "name": "Generic Incident Platform"
+  },
+  "event": {
+    "id": "incident-42-service-api",
+    "kind": "service_health_failed",
+    "summary": "Service failed health checks after a deployment."
+  },
+  "observation": {
+    "schema_version": "observation.v0",
+    "command": "deployment event: api service health check failed",
+    "cwd": "/srv/minerva-observations",
+    "exit_code": 1,
+    "stdout_tail": "api.service health_check=failed deployment_id=deploy-42",
+    "stderr_tail": "rollback required after deployment regression",
+    "duration_ms": 30000,
+    "source": "adapter.aiops_webhook",
+    "policy_summary": "AIOps adapter supplied bounded event fields only; rollback is not authorized by Minerva.",
+    "runtime": {
+      "adapter_event_id": "incident-42-service-api",
+      "service": "api",
+      "deployment_id": "deploy-42",
+      "network_status": "unknown"
+    }
+  },
+  "diagnosis": {
+    "decision": {
+      "schema_version": "decision.v0",
+      "failure": "rollback_required",
+      "action": "ask_user",
+      "confidence": 0.82,
+      "risk": "high",
+      "escalate": true,
+      "evidence": ["event reports failed health checks after deployment"],
+      "reason": "Rollback is a write-capable operational action and requires explicit human approval."
+    },
+    "policy_decision": {
+      "allowed": false,
+      "reason": "action is not read-only: ask_user"
+    },
+    "execution": {
+      "state": "not_executed",
+      "reason": "adapter reports diagnostics only"
+    }
+  },
+  "reporting": {
+    "consumer_action": "open_incident_note",
+    "policy_is_authorization": true,
+    "adapter_executes_actions": false,
+    "host_status_override": false
+  }
+}

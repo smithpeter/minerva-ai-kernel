@@ -1,0 +1,61 @@
+{
+  "schema_version": "minerva.cpu_model_eval_artifact.v0",
+  "artifact_status": "example_contract_not_benchmark",
+  "created_at": "2026-05-10T00:00:00Z",
+  "registry_candidate_id": "qwen2_5_coder_0_5b_instruct_ollama",
+  "provider_model": "qwen2.5-coder:0.5b-instruct",
+  "benchmark_claim": false,
+  "fixture_report": false,
+  "model_weights_shipped_by_minerva": false,
+  "models_downloaded_by_artifact": false,
+  "command": [
+    "python3",
+    "-m",
+    "minerva_kernel.cpu_model_eval",
+    "--provider",
+    "local-openai",
+    "--model",
+    "qwen2.5-coder:0.5b-instruct",
+    "--base-url",
+    "http://localhost:11434/v1/chat/completions",
+    "--candidate-name",
+    "qwen2.5-coder:0.5b-instruct",
+    "--parameter-count",
+    "0.49B",
+    "--runtime",
+    "ollama-openai-compatible",
+    "--quantization",
+    "ollama default",
+    "--device",
+    "cpu"
+  ],
+  "expected_report_path": "evals/cpu-model-reports/qwen2_5_coder_0_5b_instruct.local.json",
+  "evidence_requirements": {
+    "corpus_path": "evals/cpu_model_cases.jsonl",
+    "minimum_case_count": 30,
+    "scoring_contract": "docs/cpu-model-eval-scoring-contract.md",
+    "gpu_used": false,
+    "remote_models_used": false,
+    "required_metrics": [
+      "json_validity",
+      "failure_label_accuracy",
+      "safe_recovery_decision_rate",
+      "escalation_quality",
+      "dangerous_action_rate",
+      "latency_ms",
+      "fallback_behavior"
+    ],
+    "required_decisions": [
+      "promote",
+      "retest",
+      "reject"
+    ]
+  },
+  "review": {
+    "status": "template",
+    "notes": [
+      "This file defines the artifact contract only.",
+      "It is not a real local model benchmark result."
+    ]
+  }
+}

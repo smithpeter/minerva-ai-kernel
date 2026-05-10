@@ -1,0 +1,63 @@
+{
+  "schema_version": "minerva.adapter_event.v0",
+  "producer": {
+    "adapter": "github-actions-example",
+    "version": "0.1.0"
+  },
+  "platform": {
+    "type": "ci",
+    "name": "GitHub Actions"
+  },
+  "event": {
+    "id": "run-1001-job-test",
+    "kind": "job_failed",
+    "summary": "Python test job failed during dependency import."
+  },
+  "observation": {
+    "schema_version": "observation.v0",
+    "command": "python3 -m unittest discover -s tests",
+    "cwd": "/workspace/minerva-ai-kernel",
+    "exit_code": 1,
+    "stdout_tail": "",
+    "stderr_tail": "ModuleNotFoundError: No module named 'yaml'; API_KEY=[REDACTED:API_KEY]",
+    "duration_ms": 940,
+    "source": "adapter.github_actions",
+    "policy_summary": "CI adapter supplied bounded stderr tail; raw secrets were redacted before reporting.",
+    "runtime": {
+      "adapter_event_id": "run-1001-job-test",
+      "ci_provider": "github_actions",
+      "job_name": "test",
+      "network_status": "unknown"
+    },
+    "redactions": {
+      "count": 1,
+      "types": ["api_key"]
+    }
+  },
+  "diagnosis": {
+    "decision": {
+      "schema_version": "decision.v0",
+      "failure": "missing_dependency",
+      "action": "inspect_dependencies",
+      "confidence": 0.89,
+      "risk": "low",
+      "escalate": false,
+      "evidence": ["observation contains a missing dependency signal"],
+      "reason": "Inspect dependency declarations and the active runtime environment."
+    },
+    "policy_decision": {
+      "allowed": true,
+      "reason": "allowed by read-only policy"
+    },
+    "execution": {
+      "state": "not_executed",
+      "reason": "adapter reports diagnostics only"
+    }
+  },
+  "reporting": {
+    "consumer_action": "annotate_ci_job",
+    "policy_is_authorization": true,
+    "adapter_executes_actions": false,
+    "host_status_override": false
+  }
+}

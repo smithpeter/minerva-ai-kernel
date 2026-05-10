@@ -2,6 +2,8 @@
 
 Minerva is governed by measurable reliability, safety, and local-first constraints.
 
+Maintainer contact: `maintainers@minervakernel.com`.
+
 Human approval is required for:
 
 - merge to main
@@ -29,4 +31,3 @@ AI contributors must not:
 - upload secrets
 - change repository permissions
 - modify VoxSign or unrelated repositories
-

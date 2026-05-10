@@ -220,6 +220,74 @@ class CliTests(unittest.TestCase):
         self.assertEqual(payload["runtime"]["policy_allowed"], False)
         self.assertIn("policy blocked executor action", payload["stderr_tail"])
 
+    def test_cli_ci_analyze_diagnoses_existing_log(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            log_path = Path(tmpdir) / "ci.log"
+            log_path.write_text(
+                "ModuleNotFoundError: No module named 'yaml'\n",
+                encoding="utf-8",
+            )
+            provider = self._allowed_provider()
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                main(
+                    ["ci-analyze", str(log_path), "--job-name", "unit-tests"],
+                    provider=provider,
+                )
+
+        out = stdout.getvalue()
+        self.assertIn("CI log:", out)
+        self.assertIn("Observation source: ci_log", out)
+        self.assertIn("Failure: missing_dependency", out)
+        self.assertIn("Policy decision: allowed", out)
+        prompt_text = json.dumps(provider.calls)
+        self.assertIn("ci-analyze unit-tests", prompt_text)
+        self.assertIn("ModuleNotFoundError", prompt_text)
+
+    def test_cli_ci_analyze_redacts_log_before_provider_prompt(self) -> None:
+        token = "abcdefghijklmnopqrstuvwxyz123456"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            log_path = Path(tmpdir) / "ci.log"
+            log_path.write_text(
+                f"Authorization: Bearer {token}\nModuleNotFoundError\n",
+                encoding="utf-8",
+            )
+            provider = self._allowed_provider()
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                main(["ci-analyze", str(log_path)], provider=provider)
+
+        self.assertIn("Redaction summary: count=1 types=bearer_token", stdout.getvalue())
+        prompt_text = json.dumps(provider.calls)
+        self.assertNotIn(token, prompt_text)
+        self.assertIn("[REDACTED:bearer_token]", prompt_text)
+
+    def test_cli_ci_analyze_reports_missing_log(self) -> None:
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            with self.assertRaises(SystemExit) as raised:
+                main(["ci-analyze", "/no/such/ci.log"], provider=self._allowed_provider())
+
+        self.assertEqual(raised.exception.code, 1)
+        self.assertIn("CI analyze failed:", stderr.getvalue())
+
+    def test_cli_ci_analyze_bounds_large_log_tail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            log_path = Path(tmpdir) / "ci.log"
+            log_path.write_text("a" * 50 + "tail-error", encoding="utf-8")
+            provider = self._allowed_provider()
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                main(
+                    ["ci-analyze", str(log_path), "--tail-chars", "10"],
+                    provider=provider,
+                )
+
+        self.assertIn("Log tail: truncated", stdout.getvalue())
+        prompt_text = json.dumps(provider.calls)
+        self.assertIn("tail-error", prompt_text)
+        self.assertNotIn("aaaaaaaaaaaaaaaaaaaa", prompt_text)
+
 
 if __name__ == "__main__":
     unittest.main()

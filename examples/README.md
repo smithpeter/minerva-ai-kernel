@@ -8,6 +8,7 @@ Launch and demo materials:
 - [Integration recipes for CI, SDK, and agents](../docs/integration-recipes.md)
 - [M0 demo script](m0-demo-script.md)
 - [Explicit execute-action demo](execute-action-demo.md)
+- [CI log analysis example](ci-log-analysis.md)
 - [M0 release readiness checklist](../docs/m0-release-readiness.md)
 - [Minerva CI markdown summary example](minerva-ci-summary.md)
 - [Minerva CI JSON artifact example](minerva-ci-run-artifact.json)

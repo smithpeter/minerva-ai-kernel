@@ -7,7 +7,8 @@ set -euo pipefail
 # It selects pending tasks from .tasks/board.md and runs workers until the queue
 # is empty or a safety limit is reached.
 
-ROOT="${MINERVA_PROJECT_ROOT:-/Users/zouyongming/projects/minerva-ai-kernel}"
+ROOT="${MINERVA_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+export MINERVA_PROJECT_ROOT="$ROOT"
 cd "$ROOT"
 
 bash scripts/check-project-boundary.sh

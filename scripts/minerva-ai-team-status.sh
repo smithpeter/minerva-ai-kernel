@@ -33,6 +33,9 @@ else
     printf 'WARN: .tasks/board.md not found.\n'
 fi
 
+section "Plan-Eng Review"
+bash scripts/check-plan-eng-review.sh
+
 section "GitHub Issues"
 if command -v gh >/dev/null 2>&1; then
     gh issue list --limit 20 || printf 'WARN: gh issue list failed.\n'
@@ -43,4 +46,5 @@ fi
 section "Recommended Next Action"
 printf '1. Keep .tasks/board.md populated with small pending tasks.\n'
 printf '2. Let launchd/systemd run scripts/ai-team-tick.sh, or kickstart one tick manually.\n'
-printf '3. Worker must run compile/tests and update Output before claiming done.\n'
+printf '3. Worker must write/update the Plan-Eng Review block before substantial edits.\n'
+printf '4. Worker must run compile/tests and update Output before claiming done.\n'

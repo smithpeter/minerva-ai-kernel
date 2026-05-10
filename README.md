@@ -105,6 +105,8 @@ Start here:
 - [Agent tool failure guide](examples/agent-tool-failure.md)
 - [Explicit execute-action demo](examples/execute-action-demo.md)
 - [Integration recipes for CI, SDK, and agents](docs/integration-recipes.md)
+- [Adapter event reporting guide](docs/adapter-event-reporting.md)
+- [Agent-era value analysis](docs/agent-era-value-analysis.md)
 - [Minervad prototype health endpoint](docs/minervad-prototype.md)
 - [M1 roadmap task seeds](docs/m1-roadmap-task-seeds.md)
 - [M0 release readiness checklist](docs/m0-release-readiness.md)
@@ -118,16 +120,24 @@ Start here:
 - [Sub-500M CPU model plan and eval report shape](docs/sub-500m-cpu-model-plan.md)
 - [CPU-local model candidate registry](models/cpu_model_candidates.json)
 - [CPU model eval scoring contract](docs/cpu-model-eval-scoring-contract.md)
+- [Local CPU model runbook](docs/local-cpu-model-runbook.md)
 - [Product strategy](docs/product-strategy.md)
 - [Questions and requirements](docs/questions-and-requirements.md)
 - [Execution plan and founder role](docs/execution-plan-and-founder-role.md)
 - [AI team execution system](docs/ai-team-execution-system.md)
+- [Plan-Eng-Review workflow for AI-team tasks](docs/plan-eng-review-workflow.md)
+- [AI team task template](docs/ai-team-task-template.md)
 - [AI team timer runbook](docs/ai-team-timer-runbook.md)
+- [Complete vision execution queue](docs/complete-vision-execution-queue.md)
+- [Open-source launch checklist](docs/open-source-launch-checklist.md)
 - [Most important next step](docs/most-important-next-step.md)
 - [GitHub issues](docs/github-issues.md)
 - [Shared tools, isolated state](docs/shared-tools-isolated-state.md)
 - [Failure case contribution guide](docs/failure-case-contributions.md)
 - [Ecosystem contribution guide](docs/ecosystem-contributions.md)
+
+Project contact: `maintainers@minervakernel.com`. Security reports:
+`security@minervakernel.com`.
 
 ## Repository Status
 
@@ -194,6 +204,29 @@ Use `--install-backend current --install-backend-python PYTHON` to verify one
 exact target interpreter, or `--install-backend fresh-venv` to verify whether a
 fresh virtualenv created from the selected interpreter is seeded with the
 backend.
+
+For the local release owner's daily dashboard, run:
+
+```bash
+python3 scripts/release-ops-dashboard.py
+```
+
+The dashboard stays local-only by default. It summarizes Plan-Eng-Review
+health, AI-team queue state, eval smoke, CPU eval fixture status, local install
+readiness, task queue completion, and worktree cleanliness as
+`release_ops_status.v0`. Use `--json` for machine-readable output or
+`--no-fail` when you want a report even if blockers remain.
+
+When the dashboard reports a dirty worktree, generate the bounded handoff
+inventory with:
+
+```bash
+python3 scripts/release-handoff.py
+```
+
+The handoff emits `minerva.release_handoff.v0` with dashboard status,
+changed-file category counts, blockers, and next actions. It reports paths and
+categories only; it does not dump file contents or call external services.
 
 ## Local AI Team
 
