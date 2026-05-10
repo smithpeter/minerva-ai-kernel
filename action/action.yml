@@ -1,0 +1,82 @@
+{
+  "name": "Minerva Failure Observer",
+  "description": "Observe a CI command with Minerva and upload bounded diagnostic evidence.",
+  "inputs": {
+    "command": {
+      "description": "Shell command to run under minerva observe.",
+      "required": true
+    },
+    "summary-path": {
+      "description": "Path to write the deterministic markdown summary.",
+      "required": false,
+      "default": "minerva-ci-summary.md"
+    },
+    "artifact-name": {
+      "description": "GitHub Actions artifact name for the Minerva summary and JSON run artifact.",
+      "required": false,
+      "default": "minerva-ci-evidence"
+    },
+    "redaction-mode": {
+      "description": "Redaction mode for v0 evidence output. Only strict redaction is supported.",
+      "required": false,
+      "default": "strict"
+    }
+  },
+  "outputs": {
+    "final-status": {
+      "description": "Exit status returned by the observed command, or Minerva setup status if no run record was written.",
+      "value": "${{ steps.observe.outputs.final_status }}"
+    }
+  },
+  "runs": {
+    "using": "composite",
+    "steps": [
+      {
+        "name": "Set up Python",
+        "uses": "actions/setup-python@v5",
+        "with": {
+          "python-version": "3.11"
+        }
+      },
+      {
+        "name": "Install Minerva CLI",
+        "shell": "bash",
+        "env": {
+          "MINERVA_ACTION_PATH": "${{ github.action_path }}"
+        },
+        "run": "set -euo pipefail\n\nif [ -f \"${MINERVA_ACTION_PATH}/../pyproject.toml\" ]; then\n  python3 -m pip install --no-deps \"${MINERVA_ACTION_PATH}/..\"\nelse\n  python3 -m pip install --no-deps minerva-ai-kernel\nfi\n\nminerva doctor\n"
+      },
+      {
+        "id": "observe",
+        "name": "Observe command and render evidence",
+        "shell": "bash",
+        "env": {
+          "MINERVA_COMMAND": "${{ inputs.command }}",
+          "MINERVA_SUMMARY_PATH": "${{ inputs.summary-path }}",
+          "MINERVA_REDACTION_MODE": "${{ inputs.redaction-mode }}"
+        },
+        "run": "set -uo pipefail\n\nsummary_path=\"${MINERVA_SUMMARY_PATH:-minerva-ci-summary.md}\"\nartifact_path=\"minerva-ci-run.json\"\nmkdir -p \"$(dirname \"$summary_path\")\"\n\nwrite_final_status() {\n  if [ -n \"${GITHUB_OUTPUT:-}\" ]; then\n    echo \"final_status=$1\" >> \"$GITHUB_OUTPUT\"\n  fi\n}\n\npublish_step_summary() {\n  if [ -n \"${GITHUB_STEP_SUMMARY:-}\" ]; then\n    cat \"$summary_path\" >> \"$GITHUB_STEP_SUMMARY\"\n  fi\n}\n\nif [ \"$MINERVA_REDACTION_MODE\" != \"strict\" ]; then\n  {\n    echo \"# Minerva CI Summary\"\n    echo \"\"\n    echo \"Unsupported redaction-mode: $MINERVA_REDACTION_MODE. Minerva action v0 supports strict redaction only.\"\n  } > \"$summary_path\"\n  echo \"::error::Unsupported redaction-mode '$MINERVA_REDACTION_MODE'. Use 'strict'.\"\n  publish_step_summary\n  write_final_status 2\n  exit 0\nfi\n\nset +e\nminerva observe -- bash -lc \"$MINERVA_COMMAND\"\nminerva_status=$?\nset -e\n\nrun_record=\"$(ls -t .minerva/runs/*.json 2>/dev/null | head -n 1 || true)\"\nif [ -z \"$run_record\" ]; then\n  {\n    echo \"# Minerva CI Summary\"\n    echo \"\"\n    echo \"Minerva did not write a run record.\"\n  } > \"$summary_path\"\n  publish_step_summary\n  write_final_status \"$minerva_status\"\n  exit 0\nfi\n\nminerva render-ci-summary \"$run_record\" > \"$summary_path\"\npublish_step_summary\nminerva render-ci-artifact \"$run_record\" > \"$artifact_path\"\n\nobserved_status=\"$(python3 - \"$run_record\" <<'PY'\nimport json\nimport sys\n\nwith open(sys.argv[1], encoding=\"utf-8\") as handle:\n    print(json.load(handle)[\"observation\"][\"exit_code\"])\nPY\n)\"\nwrite_final_status \"$observed_status\"\n"
+      },
+      {
+        "name": "Upload Minerva CI evidence",
+        "if": "${{ always() }}",
+        "uses": "actions/upload-artifact@v4",
+        "with": {
+          "name": "${{ inputs.artifact-name }}",
+          "path": "${{ inputs.summary-path }}\nminerva-ci-run.json",
+          "if-no-files-found": "warn",
+          "retention-days": "7"
+        }
+      },
+      {
+        "name": "Exit with observed command status",
+        "if": "${{ always() }}",
+        "shell": "bash",
+        "env": {
+          "MINERVA_FINAL_STATUS": "${{ steps.observe.outputs.final_status }}"
+        },
+        "run": "exit \"${MINERVA_FINAL_STATUS:-1}\"\n"
+      }
+    ]
+  }
+}

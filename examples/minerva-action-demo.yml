@@ -1,0 +1,22 @@
+name: Minerva Action Demo
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Observe demo command with Minerva
+        uses: smithpeter/minerva-action@v0
+        with:
+          command: python3 -c "print('minerva action demo')"
+          summary-path: minerva-ci-summary.md
+          artifact-name: minerva-ci-evidence
+          redaction-mode: strict
