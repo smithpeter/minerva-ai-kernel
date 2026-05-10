@@ -32,6 +32,11 @@ Runtime State Interpreter
 
 ## Quickstart
 
+For CI adoption, start with
+[Adopt Minerva in 5 minutes](docs/adopt-minerva-in-5-minutes.md). It includes
+the GitHub Action install line, a complete workflow, and where to find the first
+Actions summary and artifact.
+
 From a local checkout:
 
 ```bash
