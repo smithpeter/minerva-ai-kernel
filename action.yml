@@ -1,0 +1,56 @@
+name: Minerva Failure Diagnosis
+description: Diagnose CI logs with Minerva without auto-repair or remote model calls.
+author: Minerva Maintainers
+
+inputs:
+  log-path:
+    description: Path to a local CI log file to diagnose.
+    required: true
+  job-name:
+    description: Human-readable CI job name recorded in the observation metadata.
+    required: false
+    default: ci-log
+  tail-chars:
+    description: Maximum log tail characters to include in the observation.
+    required: false
+    default: "12000"
+  fail-on-policy-block:
+    description: Exit nonzero when Minerva's policy blocks the proposed decision.
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Install Minerva
+      shell: bash
+      run: python3 -m pip install --no-deps "$GITHUB_ACTION_PATH"
+
+    - name: Diagnose CI log
+      shell: bash
+      env:
+        MINERVA_LOG_PATH: ${{ inputs.log-path }}
+        MINERVA_JOB_NAME: ${{ inputs.job-name }}
+        MINERVA_TAIL_CHARS: ${{ inputs.tail-chars }}
+        MINERVA_FAIL_ON_POLICY_BLOCK: ${{ inputs.fail-on-policy-block }}
+      run: |
+        set +e
+        minerva ci-analyze "$MINERVA_LOG_PATH" \
+          --job-name "$MINERVA_JOB_NAME" \
+          --tail-chars "$MINERVA_TAIL_CHARS" \
+          > minerva-ci-analysis.txt
+        minerva_status=$?
+        set -e
+
+        {
+          echo "## Minerva Failure Diagnosis"
+          echo ""
+          cat minerva-ci-analysis.txt
+        } >> "$GITHUB_STEP_SUMMARY"
+
+        cat minerva-ci-analysis.txt
+
+        if [ "$minerva_status" -eq 2 ] && [ "$MINERVA_FAIL_ON_POLICY_BLOCK" != "true" ]; then
+          exit 0
+        fi
+        exit "$minerva_status"
