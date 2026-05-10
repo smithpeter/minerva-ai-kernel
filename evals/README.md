@@ -47,6 +47,20 @@ Run it without a real model:
 python3 -m minerva_kernel.cpu_model_eval
 ```
 
+Run it against a local OpenAI-compatible provider such as Ollama:
+
+```bash
+python3 -m minerva_kernel.cpu_model_eval \
+  --provider local-openai \
+  --model qwen2.5-coder:0.5b-instruct \
+  --base-url http://localhost:11434/v1/chat/completions
+```
+
+This path measures per-case local provider latency and records the candidate
+metadata in the report. It still reports `remote_models_used: false`; Minerva
+does not call a remote model automatically when the local provider is
+unavailable.
+
 The JSON report uses the CPU model eval report shape from
 `docs/sub-500m-cpu-model-plan.md` and the scoring definitions in
 `docs/cpu-model-eval-scoring-contract.md`, including:
@@ -121,3 +135,36 @@ Current corpus category counts after M1 growth:
 Contribution target: keep every required category at 8 or more validated
 cases, then grow each category toward 15 short, redacted examples before
 adding larger generated teacher-labeled corpora.
+
+## Eval Candidate Data Loop
+
+Saved `run.v0` records can be rendered into review-only eval candidate JSONL:
+
+```bash
+minerva render-eval-candidates .minerva/runs/<run-id>.json > eval-candidates.jsonl
+```
+
+The output schema is `minerva_eval_candidate.v0`. It includes the redacted
+observation, model decision, policy decision, suggested expected labels, and a
+`review.status` of `needs_human_review`.
+
+Candidate artifacts are not approved corpus cases. They must be reviewed,
+labeled, de-duplicated, and manually adapted before being copied into
+`evals/cpu_model_cases.jsonl` or other official corpora. The command does not
+upload data, call remote models, or modify eval fixtures.
+
+Human review decisions can be recorded in a ledger JSONL using
+`minerva_eval_candidate_review.v0`. See
+`evals/eval_candidate_ledger.example.jsonl` for accepted, rejected, and
+deferred examples.
+
+Validate a ledger locally:
+
+```bash
+minerva validate-eval-ledger evals/eval_candidate_ledger.example.jsonl
+```
+
+An accepted review must name the reviewer, review time, notes, and final
+expected labels. Rejected and deferred reviews must keep
+`approved_for_corpus=false` and must not include final expected labels. The
+ledger is review evidence only; it does not mutate official corpora.

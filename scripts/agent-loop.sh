@@ -12,7 +12,7 @@ set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT"
 
-EXPECTED_ROOT="${MINERVA_PROJECT_ROOT:-/Users/zouyongming/projects/minerva-ai-kernel}"
+EXPECTED_ROOT="${MINERVA_PROJECT_ROOT:-$ROOT}"
 
 if [[ "$ROOT" != "$EXPECTED_ROOT" ]]; then
     printf 'ERROR: expected Minerva root %s, got %s\n' "$EXPECTED_ROOT" "$ROOT"
@@ -96,7 +96,7 @@ while true; do
     run_count=$((run_count + 1))
     printf '\n[%s] Run #%s: %s\n\n' "$TID" "$run_count" "$task_title"
 
-    run_worker "You are a Minerva AI team worker running as ${TID}. Before editing, confirm git root is ${EXPECTED_ROOT}. Do not read or modify /Users/zouyongming/VoxSign or unrelated repositories. Read ${TASK_FILE} and execute only that task. Set Status to in_progress at start. Respect Allowed Files and Non-Goals. Run the listed Test / Eval command before completion. Set Status to done only when acceptance criteria are met. Write concrete results in the Output section."
+    run_worker "You are a Minerva AI team worker running as ${TID}. Before editing, confirm git root is ${EXPECTED_ROOT}. Do not read or modify /Users/zouyongming/VoxSign or unrelated repositories. Read ${TASK_FILE} and docs/plan-eng-review-workflow.md, then execute only that task. For substantial code, eval, integration, security, release, or workflow changes, write a concise Plan-Eng Review before editing project files: scope challenge, what exists, NOT in scope, ASCII flow/state diagram, failure modes, test/eval plan, and parallelization note. Set Status to in_progress at start. Respect Allowed Files and Non-Goals. Run the listed Test / Eval command before completion. Set Status to done only when acceptance criteria are met and no critical Plan-Eng failure-mode gap remains. Write concrete results in the Output section."
 
     printf '\n[%s] Worker exited. Rechecking task status...\n' "$TID"
     sleep 2

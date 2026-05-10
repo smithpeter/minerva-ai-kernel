@@ -38,6 +38,30 @@ python3 -m unittest discover -s tests
 python3 -m minerva_kernel.eval_smoke
 ```
 
+For the consolidated local operations view, run:
+
+```bash
+python3 scripts/release-ops-dashboard.py
+```
+
+The dashboard emits `release_ops_status.v0` and reports Plan-Eng-Review health,
+AI-team queue status, eval smoke, CPU eval fixture status, local install
+readiness, task queue completion, and worktree cleanliness. It uses
+`scripts/check-release-readiness.py --skip-external --install-backend current`
+for the readiness signal, so it does not call external services by default.
+Dirty worktrees and pending task cards are release blockers in this dashboard.
+
+If the only remaining blocker is a dirty worktree, generate the release handoff
+inventory:
+
+```bash
+python3 scripts/release-handoff.py
+```
+
+The handoff emits `minerva.release_handoff.v0` with dashboard status,
+changed-file categories, blockers, and next actions. It is a local review aid,
+not a commit, deployment, or release publication step.
+
 Use the [M0 local release dry-run guide](m0-local-release-dry-run.md) for the
 full clean-checkout command sequence, expected artifacts, run record inspection,
 and safety checks.

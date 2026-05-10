@@ -1,8 +1,9 @@
 # Minerva
 
-Minerva is a CPU-local failure interpreter for CI/CD, agents, and ops.
+Minerva is a CPU-local reliability kernel for agents, CI/CD, and AIOps.
 
-It keeps a minimum local reasoning path available when models, tools, networks, code, configuration, or execution environments fail.
+It turns failures into structured observations, policy-gated decisions, and
+eval feedback loops without requiring a remote model for the minimum path.
 
 Project domain:
 
@@ -17,70 +18,57 @@ Standalone public page artifact:
 - [GitHub Pages public-site deployment workflow](.github/workflows/pages.yml)
 - [minervakernel.com domain cutover runbook](docs/minervakernel-domain-cutover-runbook.md)
 
-## Positioning
-
-```text
-Minerva: CPU-local failure interpreter for CI/CD, agents, and ops.
-```
-
-Long-term category:
-
-```text
-AI Reliability Kernel
-Runtime State Interpreter
-```
-
-## Quickstart
-
-From a local checkout:
+## 30-Second Example
 
 ```bash
 python3 -m pip install --no-deps .
-minerva doctor
-minerva provider-health
-minerva observe -- python3 -c "import sys; print('example failure', file=sys.stderr); sys.exit(1)"
-python -m minerva_kernel.eval_smoke
-minerva eval-report --format markdown
+minerva ci-analyze examples/logs/missing-dependency.log --job-name demo
 ```
 
-`minerva observe --` saves a run record under `.minerva/runs/`. With no
-configured provider, Minerva uses a deterministic CPU-local baseline interpreter
-for common failure signatures. Explicit local providers remain optional, and
-there is no automatic remote LLM fallback.
-
-`minerva provider-health` reports whether an optional local OpenAI-compatible
-provider is reachable. A failed health check does not block the baseline
-interpreter path.
-
-`minerva minervad --host 127.0.0.1 --port 8765` starts the prototype local
-health server. It is not started automatically by CI, `observe`, or the AI-team
-timer.
-
-Explicit read-only follow-up is available through `minerva execute-action
-decision.json --observation observation.json --cwd .`. This path is never called
-automatically by `observe`; it policy-checks the decision again and only gathers
-bounded diagnostic evidence.
-
-## First Milestone
-
-M0: Local Failure Interpreter
-
-```bash
-minerva observe -- pytest
-minerva observe -- npm test
-minerva observe -- docker build .
-```
-
-Expected behavior:
+Expected shape:
 
 ```text
-run command
-capture stdout/stderr/exit code
-build observation
-produce structured decision
-policy-check decision
-save run record
+Failure: missing_dependency
+Action: inspect_dependencies
+Policy decision: allowed
+Policy decision reason: allowed by read-only policy
 ```
+
+Minerva reports the next safe diagnostic step. It does not install packages,
+edit files, retry jobs, or auto-repair systems.
+
+## Five-Minute Demo
+
+Start with the [five-minute demo](docs/five-minute-demo.md):
+
+```bash
+minerva ci-analyze examples/logs/missing-dependency.log --job-name demo
+python3 -m minerva_kernel.eval_smoke
+```
+
+For GitHub Actions, see [GitHub Action usage](docs/github-action.md).
+
+## Core Interfaces
+
+```bash
+minerva ci-analyze build.log
+minerva observe -- pytest
+minerva diagnose observation.json
+minerva minervad --host 127.0.0.1 --port 8765
+```
+
+With no configured provider, Minerva uses a deterministic CPU-local baseline
+interpreter for common failure signatures. Explicit local providers remain
+optional, and there is no automatic remote LLM fallback.
+
+Explicit read-only follow-up is available through:
+
+```bash
+minerva execute-action decision.json --observation observation.json --cwd .
+```
+
+This path is never called automatically by `observe`; it policy-checks the
+decision again and only gathers bounded diagnostic evidence.
 
 ## Non-Negotiable Constraints
 
@@ -102,9 +90,13 @@ LLM interprets. Policy authorizes. Executor acts.
 Start here:
 
 - [Minimal Python SDK decision example](examples/minimal_sdk_decision.py)
+- [Five-minute demo](docs/five-minute-demo.md)
+- [GitHub Action usage](docs/github-action.md)
 - [Agent tool failure guide](examples/agent-tool-failure.md)
 - [Explicit execute-action demo](examples/execute-action-demo.md)
 - [Integration recipes for CI, SDK, and agents](docs/integration-recipes.md)
+- [Adapter event reporting guide](docs/adapter-event-reporting.md)
+- [Agent-era value analysis](docs/agent-era-value-analysis.md)
 - [Minervad prototype health endpoint](docs/minervad-prototype.md)
 - [M1 roadmap task seeds](docs/m1-roadmap-task-seeds.md)
 - [M0 release readiness checklist](docs/m0-release-readiness.md)
@@ -118,16 +110,25 @@ Start here:
 - [Sub-500M CPU model plan and eval report shape](docs/sub-500m-cpu-model-plan.md)
 - [CPU-local model candidate registry](models/cpu_model_candidates.json)
 - [CPU model eval scoring contract](docs/cpu-model-eval-scoring-contract.md)
+- [Local CPU model runbook](docs/local-cpu-model-runbook.md)
 - [Product strategy](docs/product-strategy.md)
 - [Questions and requirements](docs/questions-and-requirements.md)
 - [Execution plan and founder role](docs/execution-plan-and-founder-role.md)
 - [AI team execution system](docs/ai-team-execution-system.md)
+- [Plan-Eng-Review workflow for AI-team tasks](docs/plan-eng-review-workflow.md)
+- [AI team task template](docs/ai-team-task-template.md)
 - [AI team timer runbook](docs/ai-team-timer-runbook.md)
+- [Complete vision execution queue](docs/complete-vision-execution-queue.md)
+- [Open-source launch checklist](docs/open-source-launch-checklist.md)
+- [Path to 95% launch credibility](docs/path-to-95.md)
 - [Most important next step](docs/most-important-next-step.md)
 - [GitHub issues](docs/github-issues.md)
 - [Shared tools, isolated state](docs/shared-tools-isolated-state.md)
 - [Failure case contribution guide](docs/failure-case-contributions.md)
 - [Ecosystem contribution guide](docs/ecosystem-contributions.md)
+
+Project contact: `maintainers@minervakernel.com`. Security reports:
+`security@minervakernel.com`.
 
 ## Repository Status
 
@@ -194,6 +195,29 @@ Use `--install-backend current --install-backend-python PYTHON` to verify one
 exact target interpreter, or `--install-backend fresh-venv` to verify whether a
 fresh virtualenv created from the selected interpreter is seeded with the
 backend.
+
+For the local release owner's daily dashboard, run:
+
+```bash
+python3 scripts/release-ops-dashboard.py
+```
+
+The dashboard stays local-only by default. It summarizes Plan-Eng-Review
+health, AI-team queue state, eval smoke, CPU eval fixture status, local install
+readiness, task queue completion, and worktree cleanliness as
+`release_ops_status.v0`. Use `--json` for machine-readable output or
+`--no-fail` when you want a report even if blockers remain.
+
+When the dashboard reports a dirty worktree, generate the bounded handoff
+inventory with:
+
+```bash
+python3 scripts/release-handoff.py
+```
+
+The handoff emits `minerva.release_handoff.v0` with dashboard status,
+changed-file category counts, blockers, and next actions. It reports paths and
+categories only; it does not dump file contents or call external services.
 
 ## Local AI Team
 

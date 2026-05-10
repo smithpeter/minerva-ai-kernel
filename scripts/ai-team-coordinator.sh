@@ -6,7 +6,8 @@ set -euo pipefail
 # This is intentionally mechanical. It does not invent work; it prevents
 # completed task cards from being selected again by the automation loop.
 
-ROOT="${MINERVA_PROJECT_ROOT:-/Users/zouyongming/projects/minerva-ai-kernel}"
+ROOT="${MINERVA_PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+export MINERVA_PROJECT_ROOT="$ROOT"
 cd "$ROOT"
 
 bash scripts/check-project-boundary.sh >/dev/null

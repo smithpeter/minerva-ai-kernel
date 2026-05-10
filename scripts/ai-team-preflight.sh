@@ -18,6 +18,7 @@ printf 'dirty_count=%s\n' "$dirty_count"
 printf 'pending_count=%s\n' "$pending_count"
 printf 'codex_available=%s\n' "$(command -v codex >/dev/null 2>&1 && printf true || printf false)"
 printf 'claude_available=%s\n' "$(command -v claude >/dev/null 2>&1 && printf true || printf false)"
+printf 'plan_eng_review_workflow=%s\n' "$([[ -f docs/plan-eng-review-workflow.md ]] && printf present || printf missing)"
 
 if command -v systemctl >/dev/null 2>&1; then
     if systemctl --user is-active --quiet minerva-ai-team-tick.timer 2>/dev/null; then
@@ -32,6 +33,9 @@ fi
 if [[ "$dirty_count" != "0" ]]; then
     printf 'ready=false\n'
     printf 'reason=worktree_dirty\n'
+elif [[ ! -f docs/plan-eng-review-workflow.md ]]; then
+    printf 'ready=false\n'
+    printf 'reason=missing_plan_eng_review_workflow\n'
 elif [[ "$pending_count" == "0" ]]; then
     printf 'ready=false\n'
     printf 'reason=no_pending_tasks\n'

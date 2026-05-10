@@ -199,7 +199,7 @@ def propose_baseline_decision(observation: Observation) -> Decision:
     return _decision(
         failure="unknown_failure",
         action="check_logs",
-        confidence=0.70,
+        confidence=0.69,
         evidence=["observed command failed without a recognized signature"],
         reason="The deterministic baseline found no specific failure signature.",
     )

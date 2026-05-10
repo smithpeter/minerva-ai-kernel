@@ -40,8 +40,19 @@ They fail because:
 Therefore, Minerva must be run as:
 
 ```text
-spec -> issue -> branch -> tests/evals -> PR -> review -> merge -> next issue
+spec -> issue -> Plan-Eng Review -> branch -> tests/evals -> PR -> review -> merge -> next issue
 ```
+
+The Plan-Eng Review gate is defined in
+[`docs/plan-eng-review-workflow.md`](plan-eng-review-workflow.md). For
+non-trivial code, eval, integration, security, release, or workflow tasks, the
+AI worker must make the architecture, data flow, state/fallback paths,
+failure modes, and test plan explicit before editing files.
+
+When the active queue reaches zero pending tasks, use the
+[AI-team stabilization criteria](ai-team-stabilization.md) before adding more
+scope. Stabilization focuses on failed checks, evidence gaps, release handoff,
+and explicit user requests.
 
 ## Non-Negotiable Boundaries
 
@@ -203,6 +214,21 @@ Every issue must include:
 - test/eval command
 - risk notes
 
+New local task cards should start from
+[`docs/ai-team-task-template.md`](ai-team-task-template.md), which includes the
+Plan-Eng Review block and the completion gate for critical failure-mode gaps.
+
+For substantial implementation tasks, the task output or PR body must also
+include a Plan-Eng Review block with:
+
+- scope challenge
+- what already exists
+- explicit non-scope
+- ASCII data-flow or state diagram
+- failure-mode table
+- test/eval plan
+- parallelization or sequential-execution note
+
 ## Acceptance Criteria Standard
 
 No issue is complete unless it has at least one of:
@@ -226,6 +252,15 @@ Example:
 After this issue, a user can run `minerva observe -- pytest`
 and receive a structured diagnosis saved to `.minerva/runs/`.
 ```
+
+For engineering-critical issues, require:
+
+```text
+no critical Plan-Eng failure-mode gap remains open
+```
+
+A critical gap means there is no test/eval, no error handling, and the user
+would see a silent failure.
 
 ## AI Autonomy Levels
 

@@ -99,6 +99,16 @@ class BaselineInterpreterTests(unittest.TestCase):
         self.assertEqual(diagnosis.decision.action, "stop")
         self.assertTrue(diagnosis.policy_decision.allowed)
 
+    def test_default_diagnosis_blocks_unknown_low_confidence_failure(self) -> None:
+        diagnosis = diagnose_observation(
+            _observation(stderr_tail="process ended without concrete diagnostic output")
+        )
+
+        self.assertEqual(diagnosis.decision.failure, "unknown_failure")
+        self.assertEqual(diagnosis.decision.action, "check_logs")
+        self.assertFalse(diagnosis.policy_decision.allowed)
+        self.assertEqual(diagnosis.policy_decision.reason, "confidence below threshold")
+
     def test_injected_provider_still_takes_precedence(self) -> None:
         provider = MockModelProvider(
             Decision(

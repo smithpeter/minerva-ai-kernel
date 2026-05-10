@@ -86,7 +86,8 @@ This is much easier than open-ended programming.
 
 ## AIOps Failure Classes
 
-Minerva should build taxonomy packs for:
+Minerva now keeps the first machine-readable AIOps taxonomy in
+[`taxonomies/aiops-v0.json`](../taxonomies/aiops-v0.json). It covers:
 
 ### CI/CD
 
@@ -140,29 +141,32 @@ Minerva should build taxonomy packs for:
 - tool_call_failed
 - unsafe_action_blocked
 
-## AIOps Action Library
+## AIOps Action Mapping
 
-Small models should choose safe actions such as:
+Small models must choose Minerva `decision.v0` actions that already exist in
+the core instruction set. The AIOps taxonomy maps failure labels to read-only
+diagnostics or explicit escalation:
 
 ```text
-inspect_config
-inspect_env
 check_command_exists
 check_port
 check_dns
-check_tls
+check_network
 check_service_status
 check_logs
+inspect_file
 inspect_dependencies
-inspect_ci_artifacts
-retry
-rollback_candidate
 ask_bigger_llm
 ask_user
 stop
 ```
 
-The runtime maps these labels to safe commands or platform APIs.
+The runtime policy remains the safety boundary. Read-only diagnostic labels can
+be allowed by default policy when confidence and risk are acceptable.
+Escalation labels such as `ask_user` and `ask_bigger_llm` are intentionally
+policy-blocked by default, and write-capable labels such as rollback, patching,
+package installation, shell execution, or config edits are not taxonomy safe
+actions.
 
 ## Minerva As A Foundation Agent
 
@@ -338,4 +342,3 @@ Its job:
 ```text
 把配置、CI/CD、部署、网络、模型和运行时故障解释成安全、可审计、可升级的动作。
 ```
-

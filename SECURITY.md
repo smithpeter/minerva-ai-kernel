@@ -21,5 +21,5 @@ Never collect by default:
 - cookies
 - full `.env` files
 
-Report security issues privately until a public disclosure process is established.
-
+Report security issues privately to `security@minervakernel.com` until a public
+disclosure process is established.

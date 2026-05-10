@@ -113,6 +113,32 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
         default=15,
         help="Required corpus cases per category for gap reporting.",
     )
+    eval_candidates = subparsers.add_parser(
+        "render-eval-candidates",
+        help="Render review-only eval candidate JSONL from local run.v0 records.",
+    )
+    eval_candidates.add_argument("paths", nargs="+")
+    eval_candidate_ledger = subparsers.add_parser(
+        "validate-eval-ledger",
+        help="Validate review ledger JSONL for eval candidates.",
+    )
+    eval_candidate_ledger.add_argument("path")
+    ci_analyze = subparsers.add_parser(
+        "ci-analyze",
+        help="Analyze an existing CI log file without calling CI APIs.",
+    )
+    ci_analyze.add_argument("path")
+    ci_analyze.add_argument(
+        "--job-name",
+        default="ci-log",
+        help="CI job label to record in the observation runtime metadata.",
+    )
+    ci_analyze.add_argument(
+        "--tail-chars",
+        type=int,
+        default=12000,
+        help="Maximum log tail characters to include in the observation.",
+    )
     args = parser.parse_args(argv)
 
     if args.command == "doctor":
@@ -235,6 +261,50 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
         except (OSError, json.JSONDecodeError, ValueError) as exc:
             print(f"Eval report failed: {exc}", file=sys.stderr)
             raise SystemExit(1) from exc
+        return
+
+    if args.command == "render-eval-candidates":
+        from .eval_candidates import render_eval_candidates_jsonl
+
+        try:
+            print(render_eval_candidates_jsonl(args.paths), end="")
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            print(f"Render eval candidates failed: {exc}", file=sys.stderr)
+            raise SystemExit(1) from exc
+        return
+
+    if args.command == "validate-eval-ledger":
+        from .eval_candidate_ledger import validate_eval_candidate_ledger_jsonl
+
+        try:
+            summary = validate_eval_candidate_ledger_jsonl(args.path)
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            print(f"Validate eval ledger failed: {exc}", file=sys.stderr)
+            raise SystemExit(1) from exc
+        print(json.dumps(summary.to_dict(), ensure_ascii=True, indent=2, sort_keys=True))
+        return
+
+    if args.command == "ci-analyze":
+        from .ci_analyze import observation_from_ci_log
+
+        try:
+            observation = observation_from_ci_log(
+                args.path,
+                job_name=args.job_name,
+                tail_chars=args.tail_chars,
+            )
+            diagnosis = diagnose_observation(observation, provider=provider)
+        except (OSError, ValueError) as exc:
+            print(f"CI analyze failed: {exc}", file=sys.stderr)
+            raise SystemExit(1) from exc
+
+        print(f"CI log: {args.path}")
+        print(f"Observation source: {observation.source}")
+        if observation.runtime.get("stderr_truncated"):
+            print("Log tail: truncated")
+        _print_diagnosis(diagnosis)
+        if not diagnosis.policy_decision.allowed:
+            raise SystemExit(2)
         return
 
     parser.print_help()

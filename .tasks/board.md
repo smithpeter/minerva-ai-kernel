@@ -54,3 +54,19 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T46 | #46 | done | Kernel / Integration | Add local provider health check command |
 | T47 | #47 | done | Kernel / Daemon | Add minervad health endpoint skeleton |
 | T48 | #48 | done | Ops / AI Team | Add AI-team task seeding and timer runbook |
+| T49 | #49 | done | Ops / AI Team | Enforce Plan-Eng-Review in AI-team workflow |
+| T50 | #50 | done | Eval / Research | Add real local provider path to CPU model eval |
+| T51 | #51 | done | Eval | Expand CPU eval corpus to contract-ready coverage |
+| T52 | #52 | done | Eval / Data | Add eval data loop artifact schema |
+| T53 | #53 | done | Research / Model | Add local CPU candidate runbook and report artifacts |
+| T54 | #54 | done | Integration / CI | Add CI log analysis command surface |
+| T55 | #55 | done | Kernel / Daemon | Extend minervad with local diagnosis API |
+| T56 | #56 | done | Security / Ops | Add AIOps taxonomy and safe action mapping plan |
+| T57 | #57 | done | Release | Add stable release operations dashboard |
+| T58 | #58 | done | Docs / Ecosystem | Add ecosystem adapter event reporting guide |
+| T59 | #59 | done | Release / Ops | Add release handoff inventory artifact |
+| T60 | #60 | done | Eval / Data | Add eval candidate review ledger |
+| T61 | #61 | done | Research / Model | Add local model benchmark evidence gate |
+| T62 | #62 | done | Kernel / Daemon | Add minervad diagnosis smoke script |
+| T63 | #63 | done | Docs / Ecosystem | Add adapter event implementation checklist |
+| T64 | #64 | done | Ops / AI Team | Add AI-team stabilization exit criteria |

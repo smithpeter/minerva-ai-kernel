@@ -166,6 +166,9 @@ Adapters connect Minerva to CI systems, agent frameworks, model gateways,
 editors, incident tools, or device runtimes. They should be optional integration
 packages or examples, not mandatory core dependencies.
 
+Use the [adapter event reporting guide](adapter-event-reporting.md) for the
+report-only event wrapper and CI/AIOps examples.
+
 Expected contents:
 
 - Adapter manifest or README with target system, supported versions, dependency

@@ -1,0 +1,311 @@
+{
+  "schema_version": "minerva.aiops_taxonomy.v0",
+  "id": "minerva.aiops.core.v0",
+  "version": "0.1.0",
+  "description": "Core AIOps failure taxonomy and safe Minerva action mapping for CI, daemon, and adapter integrations.",
+  "safety": {
+    "policy_gated_decisions": true,
+    "read_only_by_default": true,
+    "no_auto_repair_by_default": true,
+    "writes_allowed_by_default": false,
+    "remote_services_required": false,
+    "privileged_platform_apis_allowed": false
+  },
+  "safe_action_contract": {
+    "allowed_by_default": [
+      "stop",
+      "check_dns",
+      "check_network",
+      "check_port",
+      "inspect_file",
+      "inspect_dependencies",
+      "search_local",
+      "check_command_exists",
+      "check_permissions",
+      "check_service_status",
+      "check_logs"
+    ],
+    "escalation_actions": [
+      "ask_bigger_llm",
+      "ask_user"
+    ],
+    "prohibited_action_labels": [
+      "apply_patch",
+      "delete_file",
+      "edit_file",
+      "install_package",
+      "modify_file",
+      "repair",
+      "rollback",
+      "run_command",
+      "shell",
+      "write_file"
+    ]
+  },
+  "groups": [
+    {
+      "id": "ci_cd",
+      "name": "CI/CD",
+      "failures": [
+        {
+          "label": "dependency_install_failed",
+          "definition": "Dependency installation fails before tests or build steps can run.",
+          "signals": ["ModuleNotFoundError", "npm ERR!", "No matching distribution found"],
+          "safe_action": "inspect_dependencies",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "test_failed",
+          "definition": "A test command exits non-zero after executing at least one test.",
+          "signals": ["FAILED ", "AssertionError", "test failure"],
+          "safe_action": "check_logs",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "lint_failed",
+          "definition": "A static analysis or formatting check reports violations.",
+          "signals": ["ruff", "eslint", "mypy", "format check failed"],
+          "safe_action": "inspect_file",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "build_timeout",
+          "definition": "A build, test, or packaging step exceeds its bounded timeout.",
+          "signals": ["timed out", "exit code 124", "deadline exceeded"],
+          "safe_action": "check_logs",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "artifact_missing",
+          "definition": "A downstream CI step cannot find an expected local artifact.",
+          "signals": ["artifact not found", "No such file or directory", "missing report"],
+          "safe_action": "inspect_file",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "runner_offline",
+          "definition": "The CI runner or job executor is unavailable or disconnected.",
+          "signals": ["runner offline", "agent lost", "executor unavailable"],
+          "safe_action": "check_service_status",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        }
+      ]
+    },
+    {
+      "id": "config",
+      "name": "Configuration",
+      "failures": [
+        {
+          "label": "config_missing",
+          "definition": "A required configuration file is absent from the expected path.",
+          "signals": ["missing config", "config file not found"],
+          "safe_action": "inspect_file",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "config_invalid",
+          "definition": "A configuration file is present but malformed or schema-invalid.",
+          "signals": ["invalid json", "schema validation", "YAML parse error"],
+          "safe_action": "inspect_file",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "env_var_missing",
+          "definition": "Runtime setup references a missing environment variable.",
+          "signals": ["environment variable not set", "missing env"],
+          "safe_action": "inspect_file",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "credential_expired",
+          "definition": "Authentication material is expired or rejected by a dependency.",
+          "signals": ["token expired", "credential expired", "unauthorized"],
+          "safe_action": "ask_user",
+          "risk": "high",
+          "escalation_required": true,
+          "writes_allowed": false
+        },
+        {
+          "label": "port_conflict",
+          "definition": "A local service cannot bind because another process owns the port.",
+          "signals": ["Address already in use", "EADDRINUSE", "port is already allocated"],
+          "safe_action": "check_port",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        }
+      ]
+    },
+    {
+      "id": "deployment",
+      "name": "Deployment",
+      "failures": [
+        {
+          "label": "service_start_failed",
+          "definition": "A service manager reports that a service failed to start.",
+          "signals": ["service failed", "start request repeated too quickly"],
+          "safe_action": "check_service_status",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "health_check_failed",
+          "definition": "A service starts but its health endpoint or readiness probe fails.",
+          "signals": ["health check failed", "readiness probe failed"],
+          "safe_action": "check_logs",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "migration_failed",
+          "definition": "A database or state migration fails during deployment.",
+          "signals": ["migration failed", "schema migration error"],
+          "safe_action": "ask_user",
+          "risk": "high",
+          "escalation_required": true,
+          "writes_allowed": false
+        },
+        {
+          "label": "image_pull_failed",
+          "definition": "Container runtime cannot pull or locate the requested image.",
+          "signals": ["ImagePullBackOff", "manifest unknown", "no such image"],
+          "safe_action": "check_logs",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "rollback_required",
+          "definition": "Signals suggest a rollback may be needed, but rollback is a write-capable operational action.",
+          "signals": ["rollback required", "bad deploy", "deployment regression"],
+          "safe_action": "ask_user",
+          "risk": "high",
+          "escalation_required": true,
+          "writes_allowed": false
+        }
+      ]
+    },
+    {
+      "id": "network",
+      "name": "Network",
+      "failures": [
+        {
+          "label": "dns_failure",
+          "definition": "Name resolution fails for a required endpoint.",
+          "signals": ["Could not resolve host", "Name or service not known", "DNS"],
+          "safe_action": "check_dns",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "tls_failure",
+          "definition": "TLS setup or certificate validation fails.",
+          "signals": ["certificate has expired", "SSL certificate problem"],
+          "safe_action": "check_network",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "connection_timeout",
+          "definition": "A network request cannot connect before its bounded timeout.",
+          "signals": ["connection timed out", "Failed to connect"],
+          "safe_action": "check_network",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "proxy_required",
+          "definition": "Network output suggests traffic must use a proxy or current proxy settings are wrong.",
+          "signals": ["proxy required", "407 Proxy Authentication Required"],
+          "safe_action": "check_network",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "rate_limited",
+          "definition": "A dependency rejects requests because a rate limit was exceeded.",
+          "signals": ["429", "rate limit", "too many requests"],
+          "safe_action": "check_logs",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        }
+      ]
+    },
+    {
+      "id": "llm_runtime",
+      "name": "LLM Runtime",
+      "failures": [
+        {
+          "label": "local_model_unavailable",
+          "definition": "A configured local model endpoint is unavailable or unhealthy.",
+          "signals": ["connection refused", "local provider timeout"],
+          "safe_action": "ask_bigger_llm",
+          "risk": "low",
+          "escalation_required": true,
+          "writes_allowed": false
+        },
+        {
+          "label": "remote_model_timeout",
+          "definition": "A remote model call times out, but Minerva must not fallback remotely on its own.",
+          "signals": ["remote model timeout", "upstream timeout"],
+          "safe_action": "ask_bigger_llm",
+          "risk": "medium",
+          "escalation_required": true,
+          "writes_allowed": false
+        },
+        {
+          "label": "context_overflow",
+          "definition": "Model input exceeds the configured context or payload bounds.",
+          "signals": ["context length exceeded", "token limit"],
+          "safe_action": "check_logs",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "json_schema_failure",
+          "definition": "A model or adapter returns malformed JSON or the wrong schema.",
+          "signals": ["JSONDecodeError", "unsupported schema_version"],
+          "safe_action": "inspect_file",
+          "risk": "low",
+          "escalation_required": false,
+          "writes_allowed": false
+        },
+        {
+          "label": "unsafe_action_blocked",
+          "definition": "The policy runtime blocked a write-capable, shell, credential, or unsupported action.",
+          "signals": ["blocked write", "blocked shell", "unsupported action label"],
+          "safe_action": "ask_user",
+          "risk": "high",
+          "escalation_required": true,
+          "writes_allowed": false
+        }
+      ]
+    }
+  ]
+}
