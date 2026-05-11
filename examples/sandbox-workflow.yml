@@ -1,0 +1,26 @@
+name: Minerva sandbox observation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out sandbox repository
+        uses: actions/checkout@v4
+
+      - name: Observe sandbox tests with Minerva
+        uses: smithpeter/minerva-action@v0
+        with:
+          command: python3 -m unittest discover -s tests
+          summary-path: minerva-ci-summary.md
+          artifact-name: minerva-ci-evidence
+          redaction-mode: strict

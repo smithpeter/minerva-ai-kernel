@@ -1,0 +1,142 @@
+name: Minerva CI Observer
+description: Observation-only CI command wrapper for Minerva pilot adoption.
+
+inputs:
+  command:
+    description: Command to observe.
+    required: true
+  summary-path:
+    description: Markdown summary path to write.
+    required: false
+    default: minerva-ci-summary.md
+  artifact-name:
+    description: Evidence artifact name and local evidence directory.
+    required: false
+    default: minerva-ci-evidence
+  redaction-mode:
+    description: Redaction policy for captured command logs.
+    required: false
+    default: strict
+
+runs:
+  using: composite
+  steps:
+    - name: Observe command
+      shell: bash
+      env:
+        MINERVA_COMMAND: ${{ inputs.command }}
+        MINERVA_SUMMARY_PATH: ${{ inputs.summary-path }}
+        MINERVA_ARTIFACT_NAME: ${{ inputs.artifact-name }}
+        MINERVA_REDACTION_MODE: ${{ inputs.redaction-mode }}
+      run: |
+        set -u
+
+        evidence_dir="$MINERVA_ARTIFACT_NAME"
+        raw_log="$evidence_dir/command.log.raw"
+        redacted_log="$evidence_dir/command.log"
+        exit_file="$evidence_dir/exit-code.txt"
+        decision_json="$evidence_dir/decision.json"
+
+        mkdir -p "$evidence_dir"
+        started_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+
+        set +e
+        bash -lc "$MINERVA_COMMAND" > "$raw_log" 2>&1
+        observed_exit_code=$?
+        set -e
+
+        finished_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+        printf '%s\n' "$observed_exit_code" > "$exit_file"
+
+        if [ "$MINERVA_REDACTION_MODE" = "strict" ]; then
+          sed -E 's/((token|secret|password|passwd|api[_-]?key)[[:space:]]*[:=][[:space:]]*)[^[:space:]]+/\1[REDACTED]/Ig; s/gh[pousr]_[A-Za-z0-9_]{20,}/[REDACTED_GITHUB_TOKEN]/g; s/github_pat_[A-Za-z0-9_]{20,}/[REDACTED_GITHUB_TOKEN]/g' "$raw_log" > "$redacted_log"
+        else
+          cp "$raw_log" "$redacted_log"
+        fi
+
+        if [ "$observed_exit_code" -eq 0 ]; then
+          decision="pass_observed_command"
+          decision_reason="observed command exited 0; no action requested"
+        else
+          decision="fail_observed_command"
+          decision_reason="observed command failed; auto-repair disabled"
+        fi
+
+        MINERVA_STARTED_AT="$started_at" \
+        MINERVA_FINISHED_AT="$finished_at" \
+        MINERVA_EXIT_CODE="$observed_exit_code" \
+        MINERVA_DECISION="$decision" \
+        MINERVA_DECISION_REASON="$decision_reason" \
+        MINERVA_DECISION_JSON="$decision_json" \
+        python3 - <<'PY'
+        import json
+        import os
+        from pathlib import Path
+
+        payload = {
+            "tool": "minerva-action",
+            "mode": "observation-only",
+            "command": os.environ["MINERVA_COMMAND"],
+            "summary_path": os.environ["MINERVA_SUMMARY_PATH"],
+            "artifact_name": os.environ["MINERVA_ARTIFACT_NAME"],
+            "redaction_mode": os.environ["MINERVA_REDACTION_MODE"],
+            "started_at": os.environ["MINERVA_STARTED_AT"],
+            "finished_at": os.environ["MINERVA_FINISHED_AT"],
+            "exit_code": int(os.environ["MINERVA_EXIT_CODE"]),
+            "decision": os.environ["MINERVA_DECISION"],
+            "decision_reason": os.environ["MINERVA_DECISION_REASON"],
+            "auto_repair": False,
+            "model_selected_execution": False,
+        }
+
+        Path(os.environ["MINERVA_DECISION_JSON"]).write_text(
+            json.dumps(payload, indent=2, sort_keys=True) + "\n"
+        )
+
+        summary = f"""# Minerva CI Summary
+
+        - Mode: observation-only
+        - Command: `{payload["command"]}`
+        - Redaction mode: `{payload["redaction_mode"]}`
+        - Started at: `{payload["started_at"]}`
+        - Finished at: `{payload["finished_at"]}`
+        - Exit code: `{payload["exit_code"]}`
+        - Decision: `{payload["decision"]}`
+        - Decision reason: {payload["decision_reason"]}
+        - Auto-repair: disabled
+        - Model-selected execution: disabled
+
+        ## Captured Output
+
+        See `{payload["artifact_name"]}/command.log` in the uploaded evidence artifact.
+        """
+
+        Path(payload["summary_path"]).write_text(summary)
+        PY
+
+        if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+          cat "$MINERVA_SUMMARY_PATH" >> "$GITHUB_STEP_SUMMARY"
+        fi
+
+    - name: Upload Minerva evidence
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: |
+          ${{ inputs.summary-path }}
+          ${{ inputs.artifact-name }}/
+        if-no-files-found: error
+
+    - name: Preserve observed command result
+      if: always()
+      shell: bash
+      env:
+        MINERVA_ARTIFACT_NAME: ${{ inputs.artifact-name }}
+      run: |
+        exit_code_path="$MINERVA_ARTIFACT_NAME/exit-code.txt"
+        if [ ! -f "$exit_code_path" ]; then
+          echo "Minerva evidence is missing $exit_code_path" >&2
+          exit 1
+        fi
+        exit "$(cat "$exit_code_path")"
