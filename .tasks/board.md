@@ -58,7 +58,7 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T55 | #55 | done | Adoption / Eval (hotfix) | Add --corpus argument to eval_smoke CLI (T50 unblock) |
 | T50 | #50 | done | Adoption / Eval | Capture 50 real CI failures from 3 public OSS Python repos |
 | T51 | #51 | done | Adoption / Docs | Adopt Minerva in 5 minutes runbook with screenshots |
-| T52 | #52 | in_progress | Adoption / Integration | Pilot adoption on a sandbox repo (minerva-pilot-sandbox) |
+| T52 | #52 | done | Adoption / Integration | Pilot adoption on a sandbox repo (minerva-pilot-sandbox) |
 | T53 | #53 | pending | Adoption / Eval | Cross-repo metrics: JSON validity, decision rate, dangerous-action rate on real corpus |
 | T54 | #54 | pending | Adoption / Ecosystem | Create ADOPTERS.md and first 3 adopter handles |
 | T56 | #63 | pending | Adoption / Integration (verify) | Verify 7-day Minerva sandbox evidence (T52 deferred follow-up) — earliest run 2026-05-18 |
