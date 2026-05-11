@@ -1,6 +1,7 @@
 # Minerva Pilot Sandbox Seven-Day Evidence
 
-Status: not accepted as of 2026-05-11T06:58:08Z.
+Status: T52 day-1 evidence accepted as of 2026-05-11T07:02:35Z; seven-day
+evidence remains pending for T56.
 
 The public sandbox repository now exists:
 `https://github.com/smithpeter/minerva-pilot-sandbox`.
@@ -8,8 +9,8 @@ The public sandbox repository now exists:
 The required seven-day Minerva evidence is not available yet. The action now
 resolves at `smithpeter/minerva-action@v0` and produces Minerva summaries plus
 `minerva-ci-evidence` artifacts, but qualifying runs have only been collected
-on `2026-05-11` so far. Acceptance still requires 7+ qualifying run URLs across
-seven consecutive UTC dates.
+on `2026-05-11` so far. The remaining 7+ qualifying run URLs across seven
+consecutive UTC dates are tracked by T56.
 
 ## Qualifying Minerva Runs Collected
 
@@ -58,7 +59,47 @@ Previous T52 follow-up on 2026-05-11T04:30:57Z:
 - Acceptance remains blocked: only one UTC date has qualifying Minerva runs,
   not seven consecutive dates.
 
-Latest T52 follow-up completed on 2026-05-11T06:58:08Z:
+Latest T52 completion on 2026-05-11T07:02:35Z:
+
+- Confirmed git root: `/Users/zouyongming/projects/minerva-ai-kernel`.
+- `gh auth status` reported the active account as `smithpeter` with `gist`,
+  `read:org`, `repo`, and `workflow` scopes.
+- Fresh explicit read-only `gh api --method GET` inspection at
+  `2026-05-11T07:00:58Z` returned the same six runs total: three qualifying
+  Minerva runs on `2026-05-11` and three non-qualifying setup failures. No
+  additional qualifying UTC date has appeared.
+- The sandbox workflow on `main` is blob SHA
+  `9dcdd6f065601801f43830b02840e5c04149e5bf`, size `571` bytes; local
+  `git hash-object examples/sandbox-workflow.yml` returned the same SHA, and
+  the workflow still uses `smithpeter/minerva-action@v0`.
+- The published action manifest at `v0` is blob SHA
+  `42c4bf866916643af69f5ffc8e6257d901c4385a`, size `4932` bytes; local
+  `git hash-object pilot/minerva-action-observation-only.yml` returned the
+  same SHA, and Ruby YAML parsing reported `yaml_ok`.
+- Shell artifact reads confirmed `minerva-ci-evidence` is present and not
+  expired for all three qualifying runs, with artifact IDs, sizes, expiry
+  times, and digests matching the table above.
+- Shell job metadata for failed run `25650333357` confirmed job
+  `75287206475` failed in the `Observe sandbox tests with Minerva` step. Shell
+  `gh run view --log-failed` confirmed the action resolved to
+  `smithpeter/minerva-action@v0`, wrote the Minerva CI summary, selected
+  `fail_observed_command` with reason
+  `observed command failed; auto-repair disabled`, wrote
+  `auto_repair: False` and `model_selected_execution: False`, uploaded
+  artifact `6910360681`, and preserved observed exit code `1`.
+- Sandbox `main` remains at
+  `394e13f8f310d97bd191327cae7396a4a563b4fc`; `tests/test_add.py` on `main`
+  is blob SHA `3a6c06e062556362c860311ae52a513e01cabef1`.
+- Did not copy sandbox observations into this repository's corpus, did not
+  enable model-selected execution, and did not modify any remote repository.
+- T52 test/eval re-run completed on 2026-05-11T07:02:35Z:
+  `python3 -m compileall minerva_kernel` exited 0, then
+  `python3 -m unittest discover -s tests` exited 0 with `Ran 140 tests`, `OK`,
+  `skipped=2`.
+- T52 day-1 acceptance is complete. Seven-day evidence remains pending for
+  T56.
+
+Previous T52 follow-up completed on 2026-05-11T06:58:08Z:
 
 - Confirmed git root: `/Users/zouyongming/projects/minerva-ai-kernel`.
 - `gh auth status` reported the active account as `smithpeter` with `gist`,

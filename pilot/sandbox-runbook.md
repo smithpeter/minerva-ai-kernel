@@ -8,15 +8,15 @@ back into this repository's corpus.
 
 ## Current Execution State
 
-As of 2026-05-11T06:58:08Z, the public sandbox repository exists at
+As of 2026-05-11T07:02:35Z, the public sandbox repository exists at
 `https://github.com/smithpeter/minerva-pilot-sandbox` and contains the minimal
 Python package, test suite, README, `.gitignore`, `pyproject.toml`, and
 `.github/workflows/minerva-sandbox.yml`.
 
-The pilot is not accepted as complete yet because the seven consecutive UTC
-dates requirement has not been met. The action and sandbox workflow are now
-usable, and current evidence includes successful observation runs plus one
-real observed failure:
+The T52 day-1 pilot slice is accepted as complete. The original seven
+consecutive UTC dates requirement has been split to T56 and remains pending.
+The action and sandbox workflow are usable, and current evidence includes
+successful observation runs plus one real observed failure:
 
 - Action repo: `https://github.com/smithpeter/minerva-action`
 - Final action commit: `5349c8c48fd02e821190bcdb4bf2fbb04a7691da`
@@ -58,7 +58,7 @@ Earlier non-qualifying runs remain useful setup diagnostics:
   had invalid heredoc indentation.
 
 Seven consecutive days of qualifying Minerva run URLs have not been collected
-yet.
+yet; that remaining calendar evidence belongs to T56.
 
 Previous T52 worker recheck on 2026-05-11T04:30:57Z confirmed the current state:
 T52 fixed the local action template `pilot/minerva-action-observation-only.yml`
@@ -73,7 +73,49 @@ test with a final push. No sandbox observations were copied into this repo's
 corpus, and no model-selected execution was enabled. Acceptance remains
 blocked only on the seven consecutive UTC dates requirement.
 
-Latest T52 worker recheck completed on 2026-05-11T06:58:08Z confirmed the
+Latest T52 worker completion on 2026-05-11T07:02:35Z confirmed the current
+state: `gh auth status` reported the active account as `smithpeter` with
+`gist`, `read:org`, `repo`, and `workflow` scopes. Fresh read-only
+`gh api --method GET` inspection at `2026-05-11T07:00:58Z` returned the same
+six runs total: three qualifying Minerva runs on `2026-05-11` and three
+non-qualifying setup failures. No additional qualifying UTC date has appeared.
+
+The sandbox workflow on `main` is blob SHA
+`9dcdd6f065601801f43830b02840e5c04149e5bf`, size `571` bytes; local
+`git hash-object examples/sandbox-workflow.yml` returned the same SHA, so the
+checked-in copy still matches the sandbox workflow and still uses
+`smithpeter/minerva-action@v0`.
+
+The published action manifest at `v0` is blob SHA
+`42c4bf866916643af69f5ffc8e6257d901c4385a` and size `4932` bytes; local
+`git hash-object pilot/minerva-action-observation-only.yml` returned the same
+SHA, and Ruby YAML parsing reported `yaml_ok`. Shell artifact reads confirmed
+`minerva-ci-evidence` is present and not expired for all three qualifying
+runs, with artifact IDs, sizes, expiry times, and digests matching the records
+above.
+
+Shell job metadata for failed run `25650333357` confirmed job `75287206475`
+failed in the `Observe sandbox tests with Minerva` step. Shell
+`gh run view --log-failed` confirmed the action resolved to
+`smithpeter/minerva-action@v0`, wrote the Minerva CI summary, selected
+`fail_observed_command` with reason
+`observed command failed; auto-repair disabled`, wrote `auto_repair: False`
+and `model_selected_execution: False`, uploaded artifact `6910360681`, and
+preserved observed exit code `1`.
+
+Sandbox `main` remains at
+`394e13f8f310d97bd191327cae7396a4a563b4fc`; `tests/test_add.py` on `main`
+is blob SHA `3a6c06e062556362c860311ae52a513e01cabef1`.
+
+No sandbox observations were copied into this repository's corpus, no
+model-selected execution was enabled, and no remote repository was modified
+during this recheck. T52 test/eval passed on 2026-05-11T07:02:35Z:
+`python3 -m compileall minerva_kernel` exited 0, then
+`python3 -m unittest discover -s tests` exited 0 with `Ran 140 tests`, `OK`,
+`skipped=2`. T52 is complete under the current day-1 acceptance criteria;
+seven-day evidence remains pending for T56.
+
+Previous T52 worker recheck completed on 2026-05-11T06:58:08Z confirmed the
 current state: `gh auth status` reported the active account as `smithpeter`
 with `gist`, `read:org`, `repo`, and `workflow` scopes. Fresh read-only
 `gh api --method GET` inspection at `2026-05-11T06:56:30Z` returned the same
