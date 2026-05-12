@@ -79,25 +79,40 @@ decision again and only gathers bounded diagnostic evidence.
 - policy-gated execution
 - read-only by default
 
-## M2 Baseline Floor (Real Numbers)
+## M2 Real Numbers — Baseline vs First Sub-500M Candidate
 
-The deterministic CPU-local interpreter is what runs when no provider is
-configured. Against the 30-case CPU model eval corpus
-(`evals/cpu_model_cases.jsonl`), the baseline reports:
+Against the 30-case CPU model eval corpus (`evals/cpu_model_cases.jsonl`),
+measured 2026-05-13:
 
-| Metric | Baseline |
-|---|---|
-| JSON validity | 100% (30/30) |
-| Dangerous action rate | 0% (0/30) |
-| Failure-label accuracy | 20% (6/30) |
-| Safe-recovery decision rate | 29.4% (5/17) |
-| Escalation recall | 0% (0/13) |
-| p95 latency | 3 ms |
+| Metric | Baseline (deterministic) | Qwen2.5-Coder-0.5B (Ollama, CPU) |
+|---|---|---|
+| JSON validity | 100% | 100% |
+| Dangerous action rate | 0% | 0% |
+| Failure-label accuracy | **20%** | **0%** |
+| Safe-recovery decision rate | **29.4%** | **0%** |
+| Escalation recall | 0% | 100% (provider fallback, not model) |
+| p95 latency | **3 ms** | **20 022 ms** |
+| Overall | floor | **retest** (does not clear the floor) |
 
-Reproduce: `python3 -m minerva_kernel.cpu_model_eval --provider baseline`.
-This is the floor a sub-500M model candidate must beat. Full analysis,
-per-category breakdown, and accept/reject targets:
+**The first sub-500M candidate is currently worse than the baseline.**
+The reason is diagnostic: under the default prompt, Qwen2.5-Coder-0.5B
+returns only `{"action": "..."}` and gets rejected by Minerva's
+strict `decision.v0` parser, falling through to the provider's
+hard-coded escalation fallback. Full analysis, per-category
+breakdown, and what M2 should try next:
 [docs/m2-baseline-floor.md](docs/m2-baseline-floor.md).
+
+Reproduce:
+
+```bash
+# Baseline only (no model weights, no network)
+python3 -m minerva_kernel.cpu_model_eval --provider baseline
+
+# Real candidate (needs `ollama pull qwen2.5-coder:0.5b` first)
+python3 -m minerva_kernel.cpu_model_eval \
+  --provider local-openai --model qwen2.5-coder:0.5b \
+  --base-url http://127.0.0.1:11434/v1/chat/completions --timeout 60
+```
 
 ## Core Principle
 

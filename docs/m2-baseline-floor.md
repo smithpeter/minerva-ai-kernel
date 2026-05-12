@@ -1,10 +1,19 @@
-# M2 Baseline Floor — Minerva CPU-Local Interpreter v0
+# M2 Baseline Floor + First Real Candidate
 
-This report establishes the **deterministic baseline floor** that any
-sub-500M CPU model candidate must beat to justify shipping. It runs
-`minerva_kernel.baseline.propose_baseline_decision` against the 30-case
-`evals/cpu_model_cases.jsonl` corpus using the standard
-`minerva.cpu_model_eval_report.v0` schema.
+This report has two parts:
+
+1. **Baseline floor** — what Minerva's deterministic CPU-local
+   interpreter scores on the 30-case CPU model eval corpus. This is
+   what any sub-500M candidate must beat.
+2. **First real candidate** — Qwen2.5-Coder-0.5B on Ollama
+   (Q4_K_M, CPU-only), evaluated on the same corpus with the same
+   `minerva.cpu_model_eval_report.v0` schema.
+
+The headline: **the first sub-500M candidate is currently worse than
+the baseline**. The reasons are diagnostic, not philosophical — they
+point at concrete fixes. See "What this means for M2" at the bottom.
+
+## Part 1 — Baseline (deterministic interpreter)
 
 ```bash
 python3 -m minerva_kernel.cpu_model_eval --provider baseline
@@ -81,7 +90,95 @@ recall is worse, not better — it would replace "shrugs silently" with
   add held-out cases from external contributions
   (`docs/failure-case-contributions.md`).
 
+## Part 2 — First real candidate: Qwen2.5-Coder-0.5B (Ollama, CPU)
+
+Candidate metadata:
+
+- model: `qwen2.5-coder:0.5b` (Q4_K_M quantization, 397 MB)
+- runtime: `ollama-cpu` (no GPU)
+- prompt: cpu_model_eval's default
+  (`build_prompt_messages` — system message names the action set;
+  required schema fields are embedded in the user JSON)
+- request: `response_format = {"type": "json_object"}`, `temperature = 0`
+- timeout: 60s per case
+- wall clock: 6 min 11 s for 30 cases
+
+Headline numbers:
+
+| Metric | Baseline | Qwen2.5-Coder-0.5B | Δ |
+|---|---|---|---|
+| JSON validity | 100% | 100% | — |
+| Dangerous action rate | 0% | 0% | — |
+| Failure-label accuracy | **20%** | **0%** | **−20 pp** |
+| Safe-recovery decision rate | **29.4%** | **0%** | **−29.4 pp** |
+| Escalation recall | 0% | 100% | +100 pp |
+| Escalation precision | n/a | 43.3% | (17/30 unneeded escalations) |
+| p50 latency | 0 ms | 10 520 ms | ~10 000× slower |
+| p95 latency | 3 ms | 20 022 ms | ~6 700× slower |
+| Overall decision | reject (as floor) | **retest** | — |
+
+### Why 0% failure-label accuracy
+
+This number is **not** "the model answered wrong 30 times." All 30
+responses came back as `local_llm_invalid_response` — the
+`LocalOpenAICompatibleProvider` could not parse them into a
+`decision.v0` object.
+
+Inspecting raw output shows Qwen2.5-Coder-0.5B returns only the
+`action` field most of the time, e.g.:
+
+```json
+{"action": "check_command_exists"}
+```
+
+`Decision.from_dict` requires `failure`, `action`, `confidence`,
+`risk`, `escalate`, and `evidence`. A response missing any of them is
+rejected, and the provider falls back to a hard-coded
+`ask_bigger_llm + escalate=true` decision. That fallback is why
+escalation recall is 100% — it is **not** the model deciding to
+escalate; it is the provider's failure mode looking like an escalation.
+
+A targeted smoke test with a much stronger system message (explicit
+"ALL 6 fields are MANDATORY" + per-field types) gets Qwen to return a
+complete schema, but the semantic quality is still poor:
+`failure` becomes the raw error string instead of a Minerva
+taxonomy label, and `action`/`evidence` are often unrelated to the
+observation.
+
+### What this means for M2
+
+The published Minerva story has been "CPU-local sub-500M model
+extends the deterministic baseline." This data forces three honest
+revisions:
+
+1. **0.5B-class instruct-tuned coder models do not follow Minerva's
+   `decision.v0` schema reliably under the default prompt.** Either
+   the prompt must be strengthened (cheap, but changes the
+   benchmark; tracked as a followup task) or the schema must be
+   relaxed at the provider boundary (more invasive). Neither is done
+   in this commit.
+
+2. **Even with a stronger prompt, semantic quality is weak.** A
+   single-case smoke at 0.5B shows the model writes plausible JSON
+   but does not map errors to Minerva's failure taxonomy. Climbing
+   one model tier (SmolLM2-360M-Instruct, Qwen2.5-1.5B, Phi-3.5-mini)
+   should be evaluated before declaring the sub-500M CPU hypothesis
+   alive or dead.
+
+3. **The 6-minute wall clock for 30 cases (avg ~12 s/case) on
+   commodity CPU is at the edge of usable for an interactive CI
+   gate.** It is comfortable for `minerva diagnose <file>` but not
+   for `minerva observe --` in a tight feedback loop. The
+   baseline's 3 ms p95 is the relevant comparison point here.
+
+The conclusion is **not** "abandon the local model path." It is
+"the floor we published is the right floor; the first candidate
+did not clear it; the next experiment should fix prompt + climb
+one model tier, then re-decide."
+
 ## Reproducing
+
+Baseline (deterministic, no network, no weights):
 
 ```bash
 python3 -m minerva_kernel.cpu_model_eval --provider baseline \
@@ -89,5 +186,25 @@ python3 -m minerva_kernel.cpu_model_eval --provider baseline \
   > .minerva/release-evidence/m2/baseline-cpu-model-report.json
 ```
 
-The report is deterministic given a fixed `--created-at`; CI can diff
-it against the committed copy to catch regressions in the baseline.
+Qwen2.5-Coder-0.5B via Ollama (requires `ollama pull qwen2.5-coder:0.5b`
+on a host with at least ~1 GB free RAM):
+
+```bash
+python3 -m minerva_kernel.cpu_model_eval \
+  --provider local-openai \
+  --model qwen2.5-coder:0.5b \
+  --candidate-name qwen2.5-coder-0.5b \
+  --parameter-count 0.49B \
+  --runtime ollama-cpu \
+  --quantization Q4_K_M \
+  --device cpu \
+  --base-url http://127.0.0.1:11434/v1/chat/completions \
+  --timeout 60 \
+  --created-at 2026-05-13T00:00:00Z \
+  > .minerva/release-evidence/m2/qwen2.5-coder-0.5b-cpu-model-report.json
+```
+
+The baseline report is deterministic given a fixed `--created-at`; CI
+can diff it against the committed copy to catch regressions. The Qwen
+report is **not** deterministic in latency or token-level output and
+should be re-run, not diffed.
