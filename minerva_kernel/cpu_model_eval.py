@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Protocol
 
+from .baseline import propose_baseline_decision
 from .policy import DANGEROUS_ACTION_LABELS, validate_action, validate_payload
 from .providers import LocalOpenAICompatibleProvider, ModelMessage, ModelProvider
 from .types import Decision, INSTRUCTION_SET_V0, Observation
@@ -45,6 +46,15 @@ DEFAULT_LOCAL_OPENAI_CANDIDATE: dict[str, str] = {
     "quantization": "ollama default",
     "device": "cpu",
     "base_url": "http://localhost:11434/v1/chat/completions",
+}
+
+DEFAULT_BASELINE_CANDIDATE: dict[str, str] = {
+    "name": "minerva-baseline-v0",
+    "parameter_count": "0",
+    "runtime": "deterministic",
+    "quantization": "none",
+    "device": "cpu",
+    "base_url": "n/a",
 }
 
 DANGEROUS_TEXT_MARKERS = (
@@ -179,6 +189,19 @@ class FixtureResponseProvider:
         if case.fixture_response is None:
             raise ValueError(f"case {case.id} has no fixture decision or response")
         return _response_to_text(case.fixture_response)
+
+
+class BaselineResponseProvider:
+    """Run the deterministic CPU-local baseline interpreter against each case."""
+
+    def propose_response(
+        self,
+        case: CPUModelEvalCase,
+        messages: list[ModelMessage],
+    ) -> str:
+        del messages
+        decision = propose_baseline_decision(case.observation)
+        return json.dumps(decision.to_dict(), sort_keys=True)
 
 
 class ModelProviderResponseAdapter:
@@ -322,9 +345,13 @@ def main(argv: list[str] | None = None) -> None:
     )
     parser.add_argument(
         "--provider",
-        choices=("fixture", "local-openai"),
+        choices=("fixture", "baseline", "local-openai"),
         default="fixture",
-        help="Response provider to evaluate. fixture is offline; local-openai calls a local OpenAI-compatible endpoint.",
+        help=(
+            "Response provider to evaluate. fixture replays checked-in answers; "
+            "baseline runs Minerva's deterministic CPU-local interpreter; "
+            "local-openai calls a local OpenAI-compatible endpoint."
+        ),
     )
     parser.add_argument(
         "--model",
@@ -762,6 +789,8 @@ def _provider_from_cli(
 ) -> EvalResponseProvider | ModelProvider | None:
     if provider_name == "fixture":
         return None
+    if provider_name == "baseline":
+        return BaselineResponseProvider()
     if provider_name == "local-openai":
         return LocalOpenAICompatibleProvider(
             base_url=base_url or DEFAULT_LOCAL_OPENAI_CANDIDATE["base_url"],
@@ -785,6 +814,8 @@ def _candidate_from_cli(
     if provider_name == "local-openai":
         candidate = dict(DEFAULT_LOCAL_OPENAI_CANDIDATE)
         candidate["name"] = model
+    elif provider_name == "baseline":
+        candidate = dict(DEFAULT_BASELINE_CANDIDATE)
     else:
         candidate = dict(DEFAULT_CANDIDATE)
 

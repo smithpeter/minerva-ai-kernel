@@ -79,6 +79,26 @@ decision again and only gathers bounded diagnostic evidence.
 - policy-gated execution
 - read-only by default
 
+## M2 Baseline Floor (Real Numbers)
+
+The deterministic CPU-local interpreter is what runs when no provider is
+configured. Against the 30-case CPU model eval corpus
+(`evals/cpu_model_cases.jsonl`), the baseline reports:
+
+| Metric | Baseline |
+|---|---|
+| JSON validity | 100% (30/30) |
+| Dangerous action rate | 0% (0/30) |
+| Failure-label accuracy | 20% (6/30) |
+| Safe-recovery decision rate | 29.4% (5/17) |
+| Escalation recall | 0% (0/13) |
+| p95 latency | 3 ms |
+
+Reproduce: `python3 -m minerva_kernel.cpu_model_eval --provider baseline`.
+This is the floor a sub-500M model candidate must beat. Full analysis,
+per-category breakdown, and accept/reject targets:
+[docs/m2-baseline-floor.md](docs/m2-baseline-floor.md).
+
 ## Core Principle
 
 ```text
@@ -97,7 +117,7 @@ Start here:
 - [Integration recipes for CI, SDK, and agents](docs/integration-recipes.md)
 - [Adapter event reporting guide](docs/adapter-event-reporting.md)
 - [Agent-era value analysis](docs/agent-era-value-analysis.md)
-- [Minervad prototype health endpoint](docs/minervad-prototype.md)
+- [Minervad prototype health and diagnosis endpoint](docs/minervad-prototype.md)
 - [M1 roadmap task seeds](docs/m1-roadmap-task-seeds.md)
 - [M0 release readiness checklist](docs/m0-release-readiness.md)
 - [M0 local release dry-run guide](docs/m0-local-release-dry-run.md)
@@ -108,6 +128,7 @@ Start here:
 - [M0 demo script](examples/m0-demo-script.md)
 - [Model strategy and local provider path](docs/model-strategy.md)
 - [Sub-500M CPU model plan and eval report shape](docs/sub-500m-cpu-model-plan.md)
+- [M2 baseline floor — real numbers from `--provider baseline`](docs/m2-baseline-floor.md)
 - [CPU-local model candidate registry](models/cpu_model_candidates.json)
 - [CPU model eval scoring contract](docs/cpu-model-eval-scoring-contract.md)
 - [Local CPU model runbook](docs/local-cpu-model-runbook.md)
