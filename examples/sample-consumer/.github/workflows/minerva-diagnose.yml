@@ -1,0 +1,41 @@
+name: Minerva diagnose
+
+# Run Minerva's diagnostic GitHub Action whenever the CI workflow
+# above completes with a failure status. Minerva reads the
+# uploaded build log, reports a structured failure + next-safe
+# action, and writes a markdown summary. It does NOT auto-repair,
+# install packages, or open PRs.
+
+on:
+  workflow_run:
+    workflows: ["CI (intentionally failing)"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  diagnose:
+    name: Minerva diagnose
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download build log from the failing CI run
+        uses: actions/download-artifact@v4
+        with:
+          name: build-log
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+
+      - name: Run Minerva diagnose
+        # IMPORTANT: pin this to a release tag in your real consumer
+        # repo. `@main` is shown here for the in-repo template only.
+        uses: smithpeter/minerva-ai-kernel@main
+        with:
+          log-path: build.log
+          job-name: sample-consumer-ci
+          tail-chars: "12000"
+          fail-on-policy-block: "false"

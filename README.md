@@ -125,6 +125,7 @@ LLM interprets. Policy authorizes. Executor acts.
 Start here:
 
 - [Minimal Python SDK decision example](examples/minimal_sdk_decision.py)
+- [sample-consumer — drop-in template for using Minerva from another repo](examples/sample-consumer/README.md)
 - [Five-minute demo](docs/five-minute-demo.md)
 - [GitHub Action usage](docs/github-action.md)
 - [Agent tool failure guide](examples/agent-tool-failure.md)

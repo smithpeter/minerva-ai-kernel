@@ -13,6 +13,7 @@ Launch and demo materials:
 - [Minerva CI markdown summary example](minerva-ci-summary.md)
 - [Minerva CI JSON artifact example](minerva-ci-run-artifact.json)
 - [Pack manifest examples and validation](pack-manifests/README.md)
+- [sample-consumer — drop-in template for any GitHub repo](sample-consumer/README.md)
 
 Planned examples:
 
