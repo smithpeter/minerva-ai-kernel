@@ -1,0 +1,292 @@
+{
+  "schema_version": "verify_cases.v0",
+  "cases": [
+    {
+      "id": "docs_readme_only",
+      "entries": [{"status": "M", "path": "README.md"}],
+      "expected": {
+        "risk_level": "low",
+        "merge_readiness": "caution",
+        "primary_areas": ["docs"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "review docs"
+      }
+    },
+    {
+      "id": "docs_strategy_and_task",
+      "entries": [
+        {"status": "A", "path": "docs/minerva-verify-strategy.md"},
+        {"status": "A", "path": ".tasks/T59.task.md"}
+      ],
+      "expected": {
+        "risk_level": "low",
+        "merge_readiness": "caution",
+        "primary_areas": ["docs", "planning"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "review docs"
+      }
+    },
+    {
+      "id": "runtime_cli_change",
+      "entries": [{"status": "M", "path": "minerva_kernel/cli.py"}],
+      "expected": {
+        "risk_level": "medium",
+        "merge_readiness": "caution",
+        "primary_areas": ["runtime"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "compileall"
+      }
+    },
+    {
+      "id": "security_policy_change",
+      "entries": [{"status": "M", "path": "minerva_kernel/policy.py"}],
+      "expected": {
+        "risk_level": "medium",
+        "merge_readiness": "caution",
+        "primary_areas": ["runtime", "security"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "eval_smoke"
+      }
+    },
+    {
+      "id": "redaction_runtime_change",
+      "entries": [{"status": "M", "path": "minerva_kernel/redaction.py"}],
+      "expected": {
+        "risk_level": "medium",
+        "merge_readiness": "caution",
+        "primary_areas": ["runtime", "security"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "eval_smoke"
+      }
+    },
+    {
+      "id": "tests_only",
+      "entries": [{"status": "M", "path": "tests/test_verify.py"}],
+      "expected": {
+        "risk_level": "low",
+        "merge_readiness": "caution",
+        "primary_areas": ["tests"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "unittest"
+      }
+    },
+    {
+      "id": "python_dependency_metadata",
+      "entries": [{"status": "M", "path": "pyproject.toml"}],
+      "expected": {
+        "risk_level": "medium",
+        "merge_readiness": "caution",
+        "primary_areas": ["dependencies", "schema"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "check-release-readiness"
+      }
+    },
+    {
+      "id": "node_package_metadata",
+      "entries": [{"status": "M", "path": "package.json"}],
+      "expected": {
+        "risk_level": "medium",
+        "merge_readiness": "caution",
+        "primary_areas": ["dependencies", "schema"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "check-release-readiness"
+      }
+    },
+    {
+      "id": "github_workflow_change",
+      "entries": [{"status": "M", "path": ".github/workflows/ci-smoke.yml"}],
+      "expected": {
+        "risk_level": "medium",
+        "merge_readiness": "caution",
+        "primary_areas": ["ci", "schema"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "check-release-readiness"
+      }
+    },
+    {
+      "id": "eval_fixture_change",
+      "entries": [{"status": "M", "path": "evals/smoke_cases.jsonl"}],
+      "expected": {
+        "risk_level": "low",
+        "merge_readiness": "caution",
+        "primary_areas": ["eval", "schema"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "unittest"
+      }
+    },
+    {
+      "id": "corpus_fixture_change",
+      "entries": [{"status": "M", "path": "corpus/real_world_v0/entries.jsonl"}],
+      "expected": {
+        "risk_level": "low",
+        "merge_readiness": "caution",
+        "primary_areas": ["eval", "schema"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "unittest"
+      }
+    },
+    {
+      "id": "script_runtime_change",
+      "entries": [{"status": "M", "path": "scripts/check-release-readiness.py"}],
+      "expected": {
+        "risk_level": "medium",
+        "merge_readiness": "caution",
+        "primary_areas": ["runtime"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "compileall"
+      }
+    },
+    {
+      "id": "public_site_change",
+      "entries": [{"status": "M", "path": "public-site/index.html"}],
+      "expected": {
+        "risk_level": "low",
+        "merge_readiness": "caution",
+        "primary_areas": ["site"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "unittest"
+      }
+    },
+    {
+      "id": "github_action_metadata",
+      "entries": [{"status": "M", "path": "action/action.yml"}],
+      "expected": {
+        "risk_level": "medium",
+        "merge_readiness": "caution",
+        "primary_areas": ["ci", "schema"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "check-release-readiness"
+      }
+    },
+    {
+      "id": "docs_and_runtime_mixed",
+      "entries": [
+        {"status": "M", "path": "docs/integration-recipes.md"},
+        {"status": "M", "path": "minerva_kernel/verify.py"}
+      ],
+      "expected": {
+        "risk_level": "medium",
+        "merge_readiness": "caution",
+        "primary_areas": ["docs", "runtime"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "compileall"
+      }
+    },
+    {
+      "id": "dangerous_shell_command",
+      "entries": [{"status": "M", "path": "scripts/deploy.sh"}],
+      "added_lines": ["rm -rf /tmp/minerva"],
+      "expected": {
+        "risk_level": "high",
+        "merge_readiness": "blocked",
+        "primary_areas": ["runtime"],
+        "policy_decision": "blocked",
+        "recommended_step_contains": "blocked policy"
+      }
+    },
+    {
+      "id": "secret_added_line",
+      "entries": [{"status": "M", "path": "docs/example.md"}],
+      "added_lines": ["openai_api_key=sk-abcdefghijklmnopqrstuvwxyz"],
+      "expected": {
+        "risk_level": "high",
+        "merge_readiness": "blocked",
+        "primary_areas": ["docs"],
+        "policy_decision": "blocked",
+        "recommended_step_contains": "blocked policy"
+      }
+    },
+    {
+      "id": "env_file_added",
+      "entries": [{"status": "A", "path": ".env"}],
+      "expected": {
+        "risk_level": "high",
+        "merge_readiness": "blocked",
+        "primary_areas": [],
+        "policy_decision": "blocked",
+        "recommended_step_contains": "blocked policy"
+      }
+    },
+    {
+      "id": "dockerfile_change",
+      "entries": [{"status": "M", "path": "Dockerfile"}],
+      "expected": {
+        "risk_level": "medium",
+        "merge_readiness": "caution",
+        "primary_areas": ["container"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "docker build"
+      }
+    },
+    {
+      "id": "database_migration",
+      "entries": [{"status": "A", "path": "migrations/20260604_add_jobs.sql"}],
+      "expected": {
+        "risk_level": "medium",
+        "merge_readiness": "caution",
+        "primary_areas": ["migration"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "migration replay"
+      }
+    },
+    {
+      "id": "schema_json_change",
+      "entries": [{"status": "M", "path": "examples/pack-manifests/model-pack.manifest.json"}],
+      "expected": {
+        "risk_level": "low",
+        "merge_readiness": "caution",
+        "primary_areas": ["schema"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "unittest"
+      }
+    },
+    {
+      "id": "model_candidate_registry",
+      "entries": [{"status": "M", "path": "models/cpu_model_candidates.json"}],
+      "expected": {
+        "risk_level": "low",
+        "merge_readiness": "caution",
+        "primary_areas": ["schema"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "unittest"
+      }
+    },
+    {
+      "id": "composite_action_and_tests",
+      "entries": [
+        {"status": "M", "path": "action/action.yml"},
+        {"status": "M", "path": "tests/test_github_action.py"}
+      ],
+      "expected": {
+        "risk_level": "medium",
+        "merge_readiness": "caution",
+        "primary_areas": ["ci", "schema", "tests"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "check-release-readiness"
+      }
+    },
+    {
+      "id": "runtime_delete",
+      "entries": [{"status": "D", "path": "minerva_kernel/baseline.py"}],
+      "expected": {
+        "risk_level": "medium",
+        "merge_readiness": "caution",
+        "primary_areas": ["runtime"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "compileall"
+      }
+    },
+    {
+      "id": "docs_rename",
+      "entries": [{"status": "R100", "previous_path": "docs/old.md", "path": "docs/new.md"}],
+      "expected": {
+        "risk_level": "low",
+        "merge_readiness": "caution",
+        "primary_areas": ["docs"],
+        "policy_decision": "allowed",
+        "recommended_step_contains": "review docs"
+      }
+    }
+  ]
+}
+

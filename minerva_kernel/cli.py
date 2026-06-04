@@ -19,6 +19,7 @@ from .providers import ModelProvider
 from .providers import check_local_provider_health
 from .sdk import Diagnosis, diagnose_file, diagnose_observation
 from .types import Decision, Observation
+from .verify import render_merge_evidence, render_merge_evidence_markdown_from_file
 
 
 def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -> None:
@@ -83,6 +84,11 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
         help="Override the artifact created_at timestamp for reproducible fixtures.",
     )
     ci_artifact.add_argument("path")
+    merge_summary = subparsers.add_parser(
+        "render-merge-evidence-summary",
+        help="Render a markdown merge evidence summary from merge_evidence.v0 JSON.",
+    )
+    merge_summary.add_argument("path")
     execute = subparsers.add_parser(
         "execute-action",
         help="Explicitly run a policy-gated read-only diagnostic action.",
@@ -112,6 +118,61 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
         type=int,
         default=15,
         help="Required corpus cases per category for gap reporting.",
+    )
+    verify = subparsers.add_parser(
+        "verify",
+        help="Build merge evidence for a git diff.",
+    )
+    verify.add_argument(
+        "--diff",
+        required=True,
+        help="Git diff range, for example origin/main...HEAD.",
+    )
+    verify.add_argument(
+        "--format",
+        choices=("json", "markdown"),
+        default="markdown",
+        help="Output format.",
+    )
+    verify.add_argument(
+        "--cwd",
+        default=".",
+        help="Repository directory to inspect. Defaults to the current directory.",
+    )
+    verify.add_argument(
+        "--include-untracked",
+        action="store_true",
+        help="Include untracked files from git ls-files --others --exclude-standard.",
+    )
+    verify.add_argument(
+        "--run",
+        action="store_true",
+        help="Execute selected allowlisted verification checks and include results.",
+    )
+    verify.add_argument(
+        "--output",
+        help="Optional path to write the rendered merge evidence.",
+    )
+    verify.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        help="Exclude a path or glob from diff evidence. May be provided multiple times.",
+    )
+    verify_eval_report = subparsers.add_parser(
+        "verify-eval-report",
+        help="Emit deterministic Minerva Verify eval metrics from local fixtures.",
+    )
+    verify_eval_report.add_argument(
+        "--format",
+        choices=("json", "markdown"),
+        default="json",
+        help="Output format.",
+    )
+    verify_eval_report.add_argument(
+        "--cases",
+        default=None,
+        help="Path to verify_cases.v0 JSON fixture.",
     )
     args = parser.parse_args(argv)
 
@@ -195,6 +256,14 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
             raise SystemExit(1) from exc
         return
 
+    if args.command == "render-merge-evidence-summary":
+        try:
+            print(render_merge_evidence_markdown_from_file(args.path), end="")
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            print(f"Render merge evidence summary failed: {exc}", file=sys.stderr)
+            raise SystemExit(1) from exc
+        return
+
     if args.command == "execute-action":
         try:
             decision = _load_decision(args.decision_path)
@@ -234,6 +303,39 @@ def main(argv: list[str] | None = None, provider: ModelProvider | None = None) -
             )
         except (OSError, json.JSONDecodeError, ValueError) as exc:
             print(f"Eval report failed: {exc}", file=sys.stderr)
+            raise SystemExit(1) from exc
+        return
+
+    if args.command == "verify":
+        try:
+            rendered = render_merge_evidence(
+                diff_spec=args.diff,
+                output_format=args.format,
+                repo_path=args.cwd,
+                    include_untracked=args.include_untracked,
+                    run_checks=args.run,
+                    exclude_patterns=args.exclude,
+                )
+        except (OSError, ValueError) as exc:
+            print(f"Verify failed: {exc}", file=sys.stderr)
+            raise SystemExit(1) from exc
+        _emit_output(rendered, args.output)
+        return
+
+    if args.command == "verify-eval-report":
+        from .verify_eval import DEFAULT_VERIFY_CASES_PATH, render_verify_eval_report
+
+        cases_path = args.cases or DEFAULT_VERIFY_CASES_PATH
+        try:
+            print(
+                render_verify_eval_report(
+                    output_format=args.format,
+                    cases_path=cases_path,
+                ),
+                end="",
+            )
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            print(f"Verify eval report failed: {exc}", file=sys.stderr)
             raise SystemExit(1) from exc
         return
 
@@ -288,6 +390,15 @@ def _display_path(path: Path) -> str:
         return str(path.relative_to(Path.cwd()))
     except ValueError:
         return str(path)
+
+
+def _emit_output(rendered: str, output: str | None) -> None:
+    if output:
+        path = Path(output)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(rendered, encoding="utf-8")
+        return
+    print(rendered, end="")
 
 
 if __name__ == "__main__":

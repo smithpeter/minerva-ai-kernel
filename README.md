@@ -100,6 +100,7 @@ save run record
 
 ```text
 LLM interprets. Policy authorizes. Executor acts.
+AI generates candidates. Minerva generates trust.
 ```
 
 ## Project Docs
@@ -108,6 +109,14 @@ Start here:
 
 - [Minimal Python SDK decision example](examples/minimal_sdk_decision.py)
 - [Agent tool failure guide](examples/agent-tool-failure.md)
+- [Minerva Verify strategy](docs/minerva-verify-strategy.md)
+- [Merge Evidence Schema v0 draft](docs/merge-evidence-schema-v0.md)
+- [Minerva Verify run record, 2026-06-04](docs/minerva-verify-run-record-2026-06-04.md)
+- [Minerva Verify M0 completion record](docs/minerva-verify-m0-completion.md)
+- [Minerva Verify CI handoff](docs/minerva-verify-ci-handoff.md)
+- [Agent OS bootstrap strategy](docs/agent-os-bootstrap-strategy.md)
+- [Agent Kernel ABI v0 draft](docs/agent-kernel-abi-v0.md)
+- [Future PC and Agent OS architecture watchlist](docs/future-pc-agent-architecture-watchlist.md)
 - [Explicit execute-action demo](examples/execute-action-demo.md)
 - [Integration recipes for CI, SDK, and agents](docs/integration-recipes.md)
 - [Minervad prototype health endpoint](docs/minervad-prototype.md)

@@ -49,3 +49,56 @@ Deliverables:
 - local model health check
 - audit traces
 
+## Strategic Track: Minerva Verify
+
+Goal:
+
+```text
+Make Minerva the local verification and reliability kernel for AI-generated
+code, agent actions, CI/CD, and Linux runtime changes.
+```
+
+This track has the highest near-term success probability because AI makes code
+generation cheap while verification remains the merge and deployment bottleneck.
+
+Near-term deliverables:
+
+- `minerva verify --diff BASE...HEAD`
+- Merge Evidence Schema v0
+- markdown and JSON merge evidence reports
+- GitHub Action merge evidence artifact
+- first 25 verification cases
+- useful merge evidence rate metric
+
+Reference:
+
+- [Minerva Verify strategy](docs/minerva-verify-strategy.md)
+- [Merge Evidence Schema v0 draft](docs/merge-evidence-schema-v0.md)
+- [Minerva Verify M0 completion record](docs/minerva-verify-m0-completion.md)
+
+## Strategic Track: Agent OS Bootstrap Layer
+
+Goal:
+
+```text
+Define Minerva as an agent-native bootstrap and reliability layer that can run
+before, beside, or underneath normal OS-level agent workloads.
+```
+
+This is a research and architecture track, not a replacement for the current
+M0-M4 product proof.
+
+Near-term deliverables:
+
+- Agent Kernel ABI v0
+- capability taxonomy v0
+- audit receipt schema v0
+- boot/recovery observation extensions
+- QEMU-only Minerva Rescue proof plan
+- Android feasibility phases that respect Verified Boot
+
+Reference:
+
+- [Agent OS bootstrap strategy](docs/agent-os-bootstrap-strategy.md)
+- [Agent Kernel ABI v0 draft](docs/agent-kernel-abi-v0.md)
+- [Future PC and Agent OS architecture watchlist](docs/future-pc-agent-architecture-watchlist.md)

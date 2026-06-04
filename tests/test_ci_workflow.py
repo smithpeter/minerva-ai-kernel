@@ -13,6 +13,7 @@ class CiSmokeWorkflowTests(unittest.TestCase):
 
         self.assertIn('python-version: "3.11"', workflow)
         self.assertNotIn('python-version: "3.x"', workflow)
+        self.assertIn("fetch-depth: 0", workflow)
         self.assertIn("minerva observe -- bash -c", workflow)
         self.assertIn(
             "python3 -m compileall minerva_kernel && "
@@ -28,6 +29,16 @@ class CiSmokeWorkflowTests(unittest.TestCase):
             'minerva render-ci-artifact "$run_record" > minerva-ci-run.json',
             workflow,
         )
+        self.assertIn(
+            'minerva verify --diff "$verify_diff" --run --format json '
+            "--output minerva-merge-evidence.json",
+            workflow,
+        )
+        self.assertIn(
+            'minerva render-merge-evidence-summary minerva-merge-evidence.json',
+            workflow,
+        )
+        self.assertIn("minerva-merge-evidence", workflow)
         self.assertIn(
             '["observation"]["exit_code"]',
             workflow,

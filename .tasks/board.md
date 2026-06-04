@@ -62,3 +62,10 @@ GitHub issues are the durable source of truth. Local task cards are execution ha
 | T53 | #53 | pending | Adoption / Eval | Cross-repo metrics: JSON validity, decision rate, dangerous-action rate on real corpus |
 | T54 | #54 | pending | Adoption / Ecosystem | Create ADOPTERS.md and first 3 adopter handles |
 | T56 | #63 | pending | Adoption / Integration (verify) | Verify 7-day Minerva sandbox evidence (T52 deferred follow-up) — earliest run 2026-05-18 |
+| T57 | TBD | done | Planning / Kernel / Research | Define Minerva Agent OS Bootstrap Layer v0 |
+| T58 | TBD | done | Planning / Verify / Docs | Define Minerva Verify M0 and Merge Evidence Schema v0 |
+| T59 | TBD | done | Verify / Kernel / Integration | Implement `minerva verify --diff` docs/evidence prototype |
+| T60 | TBD | done | Verify / Integration | Add GitHub Action Merge Evidence Report prototype |
+| T61 | TBD | done | Verify / Eval | Collect first 25 verification cases |
+| T62 | TBD | done | Verify / Kernel | Implement `minerva verify --run` safe check executor |
+| T63 | TBD | done | Verify / Release / Docs | Record Minerva Verify M0 completion |

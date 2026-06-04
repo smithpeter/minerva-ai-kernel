@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -42,6 +44,30 @@ jobs:
           minerva render-ci-summary "$run_record" >> "$GITHUB_STEP_SUMMARY"
           minerva render-ci-artifact "$run_record" > minerva-ci-run.json
 
+          if [ -n "${GITHUB_BASE_REF:-}" ]; then
+            verify_diff="origin/${GITHUB_BASE_REF}...HEAD"
+          elif git rev-parse HEAD^ >/dev/null 2>&1; then
+            verify_diff="HEAD^...HEAD"
+          else
+            verify_diff="HEAD"
+          fi
+
+          {
+            echo ""
+            echo "---"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if minerva verify --diff "$verify_diff" --run --format json --output minerva-merge-evidence.json; then
+            minerva render-merge-evidence-summary minerva-merge-evidence.json >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "# Minerva Merge Evidence"
+              echo ""
+              echo "Minerva could not build merge evidence for \`$verify_diff\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
           observed_status="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["observation"]["exit_code"])' "$run_record")"
           exit "$observed_status"
 
@@ -51,5 +77,14 @@ jobs:
         with:
           name: minerva-ci-run
           path: minerva-ci-run.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload Minerva merge evidence
+        if: ${{ always() && hashFiles('minerva-merge-evidence.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: minerva-merge-evidence
+          path: minerva-merge-evidence.json
           if-no-files-found: error
           retention-days: 7
